@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RouteGuideMaker</title>
+    <link rel="icon"
+        href="data:image/svg+xml,
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥾</text></svg>" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <div class="control-panel">
+        <div class="control-section">
+            <label>
+                <input type="radio" name="mode" value="fileio" checked>
+                <span class="selected">ファイルの入出力</span>
+            </label>
+            <label>
+                <input type="radio" name="mode" value="routeGuide">
+                <span>ルートガイドの作成・編集</span>
+            </label>
+            <label>
+                <input type="radio" name="mode" value="photo">
+                <span>コース用写真の選択</span>
+            </label>
+            <label>
+                <input type="radio" name="mode" value="color">
+                <span>ルートガイド用マーカーの設定</span>
+            </label>
+        </div>
+
+        <!-- ファイルの入出力パネル -->
+        <div id="fileIoPanel">
+            <div class="io-controls">
+                <div class="io-row">
+                    <label for="excelInput" class="file-input-label">ポイントGPS(Excel)の読み込み</label>
+                    <input type="file" id="excelInput" accept=".xlsx, .xls" />
+                </div>
+                <div class="io-row">
+                    <label for="geojsonInput" class="file-input-label">ルート(GeoJSON)ファイルの読み込み</label>
+                    <input type="file" id="geojsonInput" accept=".geojson" multiple />
+                </div>
+                <div class="io-row">
+                    <button id="exportBtn">ルートガイドのファイル出力</button>
+                </div>
+                <div class="io-row">
+                    <label for="routeGuideImportInput" class="file-input-label">ルートガイドのファイル読み込み</label>
+                    <input type="file" id="routeGuideImportInput" accept=".geojson" style="display:none;" />
+                </div>
+            </div>
+        </div>
+
+        <!-- ルートガイドの作成・編集パネル -->
+        <div id="routeGuidePanel" style="display: none;">
+            <div class="route-guide-section">
+                <div class="route-guide-field-row">
+                    <label class="route-guide-field-label">ルートガイド</label>
+                    <select id="routeGuideSelect" class="route-guide-select"></select>
+                </div>
+                <div class="route-guide-btn-row">
+                    <button id="routeGuideNewBtn">新規</button>
+                    <button id="routeGuideRenameBtn">名称変更</button>
+                    <button id="routeGuideDeleteBtn">削除</button>
+                </div>
+                <div id="routeGuideNameArea" style="display:none;">
+                    <input type="text" id="routeGuideName" class="route-guide-name-input" placeholder="ルートガイド名を入力">
+                    <div class="route-guide-confirm-row">
+                        <button id="routeGuideConfirmBtn">確定</button>
+                        <button id="routeGuideCancelBtn">キャンセル</button>
+                    </div>
+                </div>
+            </div>
+            <div class="point-list-section">
+                <div class="point-list-header">
+                    <span class="point-no-head">No.</span>
+                    <span class="point-id-head">Point</span>
+                    <span class="point-name-head">名称</span>
+                </div>
+                <div id="pointListContainer"></div>
+                <div class="route-guide-edit-btn-row">
+                    <button id="editStartBtn">Edit</button>
+                    <button id="fixBtn" disabled>Fix</button>
+                    <button id="pointUpBtn" class="route-guide-icon-btn" disabled title="上へ移動">Up</button>
+                    <button id="pointDownBtn" class="route-guide-icon-btn" disabled title="下へ移動">Down</button>
+                    <button id="pointRemoveBtn" class="route-guide-icon-btn" disabled title="削除">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- コース用写真の選択パネル -->
+        <div id="photoPanel" style="display: none;">
+            <div class="placeholder-panel">
+                <p>コース用写真の選択</p>
+                <p class="placeholder-note">（仕様検討中）</p>
+            </div>
+        </div>
+
+        <!-- ルートガイド用マーカーの設定パネル -->
+        <div id="colorPanel" style="display: none;">
+            <div class="color-group-title">選択中ルートガイド</div>
+            <div class="color-row">
+                <label class="color-label">ポイント</label>
+                <input type="text" id="colorSelectedPoint" class="color-input" value="#ff0000">
+                <span class="color-swatch" id="swatchSelectedPoint" style="background:#ff0000;"></span>
+            </div>
+            <div class="color-row">
+                <label class="color-label">ルート</label>
+                <input type="text" id="colorSelectedRoute" class="color-input" value="#ff8c00">
+                <span class="color-swatch" id="swatchSelectedRoute" style="background:#ff8c00;"></span>
+            </div>
+            <div class="color-group-title">その他のルートガイド</div>
+            <div class="color-row">
+                <label class="color-label">ポイント</label>
+                <input type="text" id="colorOtherPoint" class="color-input" value="#f08080">
+                <span class="color-swatch" id="swatchOtherPoint" style="background:#f08080;"></span>
+            </div>
+            <div class="color-row">
+                <label class="color-label">ルート</label>
+                <input type="text" id="colorOtherRoute" class="color-input" value="#d2b48c">
+                <span class="color-swatch" id="swatchOtherRoute" style="background:#d2b48c;"></span>
+            </div>
+            <div class="color-btn-row">
+                <button id="colorResetBtn">デフォルト値に戻す</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GeoJSON読み込み種別選択モーダル -->
+    <div id="geojsonImportModal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-title">読み込む種別を選択</div>
+            <div class="modal-row">
+                <label class="modal-check-label">
+                    <input type="checkbox" id="importPoint">
+                    <span>ポイント</span>
+                </label>
+                <span id="importPointCount" class="modal-count">0点</span>
+            </div>
+            <div class="modal-row">
+                <label class="modal-check-label">
+                    <input type="checkbox" id="importRoute" checked>
+                    <span>ルート</span>
+                </label>
+                <span id="importRouteCount" class="modal-count">0本</span>
+            </div>
+            <div class="modal-row">
+                <label class="modal-check-label">
+                    <input type="checkbox" id="importSpot" checked>
+                    <span>スポット</span>
+                </label>
+                <span id="importSpotCount" class="modal-count">0個</span>
+            </div>
+            <div class="modal-actions">
+                <button id="importConfirmBtn" class="modal-btn modal-btn-primary">読み込む</button>
+                <button id="importCancelBtn" class="modal-btn">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
