@@ -214,7 +214,7 @@ function fillDropdown(sel, ids, currentValue) {
 // 4ポイント列挙テキスト
 // ========================================
 function renderPointsList() {
-    const ta = document.getElementById('routeGuidePointsList');
+    const input = document.getElementById('routeGuidePointsList');
     let startId = '';
     let endId = '';
     if (selectedRouteIndex >= 0 && selectedRouteIndex < _routeFeatureStore.length) {
@@ -222,12 +222,7 @@ function renderPointsList() {
         startId = basic.startId || '';
         endId = basic.endId || '';
     }
-    ta.value = [
-        `開始前ポイント: ${preStartPointId}`,
-        `開始ポイント: ${startId}`,
-        `終了ポイント: ${endId}`,
-        `終了後ポイント: ${postEndPointId}`
-    ].join('\n');
+    input.value = [preStartPointId, startId, endId, postEndPointId].join(' → ');
 }
 
 // ========================================
