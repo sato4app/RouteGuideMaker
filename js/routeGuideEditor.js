@@ -229,6 +229,8 @@ function onStartFilterChange() {
 
 function onEndFilterChange() {
     updatePathDropdown();
+    // 絞り込みポイントが選択中ポイントに含まれるためハイライト更新
+    renderHighlights();
 }
 
 function onRoutePathChange() {
@@ -265,9 +267,9 @@ function resetDropdowns() {
 
 // ========================================
 // ハイライト描画
-//   ・ルート前後（前ポイント→開始、終了→後ポイント の線）
+//   ・ルート前後（開始↔前ルートのうち、開始側から中間点数1/3まで／終了↔後の終了側から1/3まで）
 //   ・基本ルート（選択中ルート）
-//   ・選択中ポイント（基本ルートの開始/終了、前/後ポイントのマーカー）
+//   ・選択中ポイント（基本ルートの開始/終了、絞り込みで選択したポイント）
 // ========================================
 function findRouteBetween(idA, idB) {
     return _routeFeatureStore.find(r =>
@@ -276,35 +278,62 @@ function findRouteBetween(idA, idB) {
     );
 }
 
+// ルートのうち anchorId 端点側から、中間点数の1/3 までの座標列を返す
+// 中間点 = 端点を除いた内部の点。1/3はceilで切り上げ。
+// 端点を1点 + 1/3の中間点 を含めた連続座標を返す。
+function getPartialFromAnchor(route, anchorId) {
+    if (!route || !route.coords || route.coords.length < 2) return null;
+    const n = route.coords.length;
+    const waypointCount = Math.max(0, n - 2);
+    const takeWaypoints = Math.ceil(waypointCount / 3);
+    const takeCoords = Math.max(2, takeWaypoints + 1); // 最低2点で線を成立
+
+    if (route.startId === anchorId) {
+        return route.coords.slice(0, Math.min(takeCoords, n));
+    } else if (route.endId === anchorId) {
+        return route.coords.slice(Math.max(0, n - takeCoords));
+    }
+    return null;
+}
+
 function renderHighlights() {
     if (!highlightLayer) return;
     highlightLayer.clearLayers();
-    if (selectedRouteIndex < 0 || selectedRouteIndex >= _routeFeatureStore.length) return;
 
-    const basic = _routeFeatureStore[selectedRouteIndex];
+    const hasBasic = selectedRouteIndex >= 0 && selectedRouteIndex < _routeFeatureStore.length;
+    const basic = hasBasic ? _routeFeatureStore[selectedRouteIndex] : null;
 
-    // ─── ルート前後（基本ルートの下に重ねるため先に描画） ───
-    if (preStartPointId && basic.startId) {
+    // ─── ルート前後（基本ルート/選択中ポイントの下に重ねるため先に描画） ───
+    if (basic && preStartPointId && basic.startId) {
         const r = findRouteBetween(preStartPointId, basic.startId);
-        if (r && r.coords && r.coords.length > 0) {
-            L.polyline(r.coords, getLineStyle('routeAdjacent')).addTo(highlightLayer);
+        const partial = getPartialFromAnchor(r, basic.startId);
+        if (partial && partial.length >= 2) {
+            L.polyline(partial, getLineStyle('routeAdjacent')).addTo(highlightLayer);
         }
     }
-    if (postEndPointId && basic.endId) {
+    if (basic && postEndPointId && basic.endId) {
         const r = findRouteBetween(basic.endId, postEndPointId);
-        if (r && r.coords && r.coords.length > 0) {
-            L.polyline(r.coords, getLineStyle('routeAdjacent')).addTo(highlightLayer);
+        const partial = getPartialFromAnchor(r, basic.endId);
+        if (partial && partial.length >= 2) {
+            L.polyline(partial, getLineStyle('routeAdjacent')).addTo(highlightLayer);
         }
     }
 
     // ─── 選択中ルート ───
-    if (basic.coords && basic.coords.length > 0) {
+    if (basic && basic.coords && basic.coords.length > 0) {
         L.polyline(basic.coords, getLineStyle('selectedRoute')).addTo(highlightLayer);
     }
 
-    // ─── 選択中ポイント（基本ルートの開始・終了、前ポイント、後ポイント） ───
-    const selectedIds = [basic.startId, basic.endId, preStartPointId, postEndPointId]
-        .filter(id => id);
+    // ─── 選択中ポイント（基本ルートの開始・終了 + 絞り込みで選択したポイント） ───
+    //     前ポイント・後ポイントは含めない
+    const selectedIds = new Set();
+    if (basic) {
+        if (basic.startId) selectedIds.add(basic.startId);
+        if (basic.endId)   selectedIds.add(basic.endId);
+    }
+    const routeEndFilter = document.getElementById('routeEnd').value;
+    if (routeEndFilter) selectedIds.add(routeEndFilter);
+
     selectedIds.forEach(id => {
         const m = _markerStore && _markerStore.get(id);
         if (!m) return;

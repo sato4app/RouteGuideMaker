@@ -285,7 +285,7 @@ button:hover {
 }
 
 .marker-shape-select {
-    width: 6.75em;
+    width: 6em;
     font-size: 11px;
     padding: 2px 18px 2px 4px;
     border: 1px solid #ccc;
@@ -421,6 +421,7 @@ button:hover {
         transform: translate(-50%, -50%) scale(0.9);
         opacity: 0;
     }
+
     to {
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
@@ -428,8 +429,13 @@ button:hover {
 }
 
 @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 /* GeoJSON読み込み種別選択モーダル */

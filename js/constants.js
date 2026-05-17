@@ -46,7 +46,7 @@ export const MARKER_DEFAULTS = {
         kind: 'point',
         color: '#ff0000',
         shape: 'circle',
-        size: 8
+        size: 6
     },
     route: {
         label: 'ルート',
@@ -74,18 +74,18 @@ export const MARKER_DEFAULTS = {
         kind: 'point',
         color: '#9acd32',
         shape: 'square',
-        size: 8
+        size: 6
     }
 };
 
 // 選択可能なマーカー形状
 export const MARKER_SHAPES = [
-    { value: 'circle',   label: '円' },
-    { value: 'square',   label: '四角' },
+    { value: 'circle', label: '円' },
+    { value: 'square', label: '四角' },
     { value: 'triangle', label: '三角' },
-    { value: 'diamond',  label: 'ひし形' },
-    { value: 'star',     label: '星形' },
-    { value: 'line',     label: '線' }
+    { value: 'diamond', label: 'ひし形' },
+    { value: 'star', label: '星形' },
+    { value: 'line', label: '線' }
 ];
 
 // モード定数
