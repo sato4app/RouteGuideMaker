@@ -125,6 +125,7 @@ button:hover {
     font-size: 12px;
     white-space: nowrap;
     flex-shrink: 0;
+    min-width: 6.5em;
 }
 
 .route-guide-dropdown-short {
@@ -195,7 +196,37 @@ button:hover {
 .route-guide-path {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.route-guide-dropdown-full:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+    color: #888;
+}
+
+.route-guide-points {
+    margin-top: 4px;
+}
+
+.route-guide-points-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    background-color: #fafafa;
+    font-family: inherit;
+    resize: none;
+    line-height: 1.4;
+    color: #333;
+}
+
+.route-guide-points-textarea:focus {
+    outline: none;
+    border-color: #0066cc;
 }
 
 .route-guide-dropdown-full {

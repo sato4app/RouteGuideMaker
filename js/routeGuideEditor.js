@@ -1,7 +1,5 @@
 // ルートガイドの作成・編集
 
-import { DEFAULTS } from './constants.js';
-
 let _map = null;
 let _markerStore = null;
 let _routeFeatureStore = null;
@@ -16,6 +14,8 @@ const SELECTED_ROUTE_STYLE = {
 
 // 選択状態
 let selectedRouteIndex = -1;
+let preStartPointId = '';
+let postEndPointId = '';
 
 // fileIO 互換用スタブ（旧データモデルは未使用）
 export function isEditingMode() { return false; }
@@ -38,12 +38,15 @@ export function setupRouteGuideEditor(map, markerStore, routeFeatureStore) {
     document.getElementById('routeStart').addEventListener('change', onStartFilterChange);
     document.getElementById('routeEnd').addEventListener('change', onEndFilterChange);
     document.getElementById('routePath').addEventListener('change', onRoutePathChange);
+    document.getElementById('preStartPoint').addEventListener('change', onPreStartChange);
+    document.getElementById('postEndPoint').addEventListener('change', onPostEndChange);
     document.getElementById('resetDropdownBtn').addEventListener('click', resetDropdowns);
 
     // ルート読み込み時にドロップダウンを更新
     document.addEventListener('routeStoreUpdated', updateAllDropdowns);
 
     updateAllDropdowns();
+    renderPointsList();
 }
 
 // ========================================
@@ -135,13 +138,96 @@ function updatePathDropdown() {
         pathSel.appendChild(opt);
     });
 
-    // 以前の選択が結果に残っていれば維持、なければ解除
     if (prev && filtered.some(r => String(_routeFeatureStore.indexOf(r)) === prev)) {
         pathSel.value = prev;
+        selectedRouteIndex = parseInt(prev, 10);
     } else {
         selectedRouteIndex = -1;
         renderSelectedRoute();
     }
+
+    updateAdjacentDropdowns();
+}
+
+// ========================================
+// 開始前ポイント／終了後ポイントの選択候補
+// ========================================
+function getConnectedPoints(anchorId, excludeId) {
+    const candidates = new Set();
+    _routeFeatureStore.forEach((r, i) => {
+        if (i === selectedRouteIndex) return; // 基本ルート自身は除外
+        if (!r.startId || !r.endId) return;
+        if (r.startId === anchorId && r.endId !== excludeId) candidates.add(r.endId);
+        else if (r.endId === anchorId && r.startId !== excludeId) candidates.add(r.startId);
+    });
+    return [...candidates].sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true })
+    );
+}
+
+function updateAdjacentDropdowns() {
+    const preSel = document.getElementById('preStartPoint');
+    const postSel = document.getElementById('postEndPoint');
+
+    if (selectedRouteIndex < 0) {
+        preSel.innerHTML = '<option value="">選択</option>';
+        postSel.innerHTML = '<option value="">選択</option>';
+        preSel.disabled = true;
+        postSel.disabled = true;
+        preStartPointId = '';
+        postEndPointId = '';
+        renderPointsList();
+        return;
+    }
+
+    const basic = _routeFeatureStore[selectedRouteIndex];
+    const preCandidates = getConnectedPoints(basic.startId, basic.endId);
+    const postCandidates = getConnectedPoints(basic.endId, basic.startId);
+
+    fillDropdown(preSel, preCandidates, preStartPointId);
+    fillDropdown(postSel, postCandidates, postEndPointId);
+
+    preSel.disabled = preCandidates.length === 0;
+    postSel.disabled = postCandidates.length === 0;
+
+    // 候補に含まれない選択値はクリア
+    if (preStartPointId && !preCandidates.includes(preStartPointId)) preStartPointId = '';
+    if (postEndPointId && !postCandidates.includes(postEndPointId)) postEndPointId = '';
+    preSel.value = preStartPointId;
+    postSel.value = postEndPointId;
+
+    renderPointsList();
+}
+
+function fillDropdown(sel, ids, currentValue) {
+    sel.innerHTML = '<option value="">選択</option>';
+    ids.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = id;
+        sel.appendChild(opt);
+    });
+    if (currentValue && ids.includes(currentValue)) sel.value = currentValue;
+}
+
+// ========================================
+// 4ポイント列挙テキスト
+// ========================================
+function renderPointsList() {
+    const ta = document.getElementById('routeGuidePointsList');
+    let startId = '';
+    let endId = '';
+    if (selectedRouteIndex >= 0 && selectedRouteIndex < _routeFeatureStore.length) {
+        const basic = _routeFeatureStore[selectedRouteIndex];
+        startId = basic.startId || '';
+        endId = basic.endId || '';
+    }
+    ta.value = [
+        `開始前ポイント: ${preStartPointId}`,
+        `開始ポイント: ${startId}`,
+        `終了ポイント: ${endId}`,
+        `終了後ポイント: ${postEndPointId}`
+    ].join('\n');
 }
 
 // ========================================
@@ -159,7 +245,21 @@ function onEndFilterChange() {
 function onRoutePathChange() {
     const val = document.getElementById('routePath').value;
     selectedRouteIndex = val === '' ? -1 : parseInt(val, 10);
+    // 基本ルートが変わったら隣接ポイント選択をクリア
+    preStartPointId = '';
+    postEndPointId = '';
     renderSelectedRoute();
+    updateAdjacentDropdowns();
+}
+
+function onPreStartChange() {
+    preStartPointId = document.getElementById('preStartPoint').value;
+    renderPointsList();
+}
+
+function onPostEndChange() {
+    postEndPointId = document.getElementById('postEndPoint').value;
+    renderPointsList();
 }
 
 function resetDropdowns() {
@@ -167,6 +267,8 @@ function resetDropdowns() {
     document.getElementById('routeEnd').value = '';
     document.getElementById('routePath').value = '';
     selectedRouteIndex = -1;
+    preStartPointId = '';
+    postEndPointId = '';
     updateEndDropdown();
     updatePathDropdown();
     renderSelectedRoute();

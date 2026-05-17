@@ -72,10 +72,28 @@
             </div>
 
             <div class="route-guide-path">
-                <span class="route-guide-label">ルート</span>
+                <span class="route-guide-label">基本ルート</span>
                 <select class="route-guide-dropdown-full" id="routePath">
                     <option value="">開始 ～ 終了ポイント</option>
                 </select>
+            </div>
+
+            <div class="route-guide-path">
+                <span class="route-guide-label">開始前ポイント</span>
+                <select class="route-guide-dropdown-full" id="preStartPoint" disabled>
+                    <option value="">選択</option>
+                </select>
+            </div>
+
+            <div class="route-guide-path">
+                <span class="route-guide-label">終了後ポイント</span>
+                <select class="route-guide-dropdown-full" id="postEndPoint" disabled>
+                    <option value="">選択</option>
+                </select>
+            </div>
+
+            <div class="route-guide-points">
+                <textarea id="routeGuidePointsList" class="route-guide-points-textarea" readonly rows="4"></textarea>
             </div>
         </div>
 
