@@ -50,18 +50,10 @@ function renderMarkerSettings() {
         const section = document.createElement('div');
         section.className = 'marker-settings-section';
 
-        const title = document.createElement('div');
-        title.className = 'marker-type-title';
-        title.textContent = cfg.label;
-        section.appendChild(title);
+        const name = document.createElement('span');
+        name.className = 'marker-type-name';
+        name.textContent = cfg.label;
 
-        const row = document.createElement('div');
-        row.className = 'marker-attr-row';
-
-        // 色
-        const colorLabel = document.createElement('span');
-        colorLabel.className = 'marker-attr-label';
-        colorLabel.textContent = '色';
         const colorInput = document.createElement('input');
         colorInput.type = 'color';
         colorInput.className = 'marker-color-input';
@@ -70,10 +62,6 @@ function renderMarkerSettings() {
         colorInput.value = cfg.color;
         colorInput.addEventListener('change', onMarkerSettingChange);
 
-        // 形状
-        const shapeLabel = document.createElement('span');
-        shapeLabel.className = 'marker-attr-label';
-        shapeLabel.textContent = '形状';
         const shapeSelect = document.createElement('select');
         shapeSelect.className = 'marker-shape-select';
         shapeSelect.dataset.type = type;
@@ -87,10 +75,6 @@ function renderMarkerSettings() {
         });
         shapeSelect.addEventListener('change', onMarkerSettingChange);
 
-        // サイズ
-        const sizeLabel = document.createElement('span');
-        sizeLabel.className = 'marker-attr-label';
-        sizeLabel.textContent = 'サイズ';
         const sizeInput = document.createElement('input');
         sizeInput.type = 'number';
         sizeInput.className = 'marker-size-input';
@@ -98,11 +82,14 @@ function renderMarkerSettings() {
         sizeInput.dataset.attr = 'size';
         sizeInput.value = cfg.size;
         sizeInput.min = '1';
-        sizeInput.max = '30';
+        sizeInput.max = '20';
         sizeInput.addEventListener('change', onMarkerSettingChange);
 
-        row.append(colorLabel, colorInput, shapeLabel, shapeSelect, sizeLabel, sizeInput);
-        section.appendChild(row);
+        const sizeUnit = document.createElement('span');
+        sizeUnit.className = 'marker-size-unit';
+        sizeUnit.textContent = 'px';
+
+        section.append(name, colorInput, shapeSelect, sizeInput, sizeUnit);
         container.appendChild(section);
     });
 }
@@ -114,6 +101,8 @@ function onMarkerSettingChange(e) {
     if (attr === 'size') {
         value = parseInt(value, 10);
         if (isNaN(value) || value < 1) value = 1;
+        if (value > 20) value = 20;
+        e.target.value = value;
     }
     markerSettings[type][attr] = value;
     refreshMarkers();

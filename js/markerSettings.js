@@ -38,6 +38,13 @@ export function createMarker(type, latlng) {
     } else if (cfg.shape === 'diamond') {
         const inner = `<div style="width:${cfg.size}px;height:${cfg.size}px;background:${cfg.color};transform:rotate(45deg);border:1px solid white;box-shadow:0 0 2px rgba(0,0,0,0.5);"></div>`;
         html = `<div style="display:flex;justify-content:center;align-items:center;width:${px}px;height:${px}px;">${inner}</div>`;
+    } else if (cfg.shape === 'star') {
+        const clip = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+        html = `<div style="width:${px}px;height:${px}px;background:${cfg.color};clip-path:${clip};filter:drop-shadow(0 0 1px rgba(0,0,0,0.6));"></div>`;
+    } else if (cfg.shape === 'line') {
+        const thickness = 3;
+        const margin = (px - thickness) / 2;
+        html = `<div style="width:${px}px;height:${thickness}px;background:${cfg.color};margin-top:${margin}px;box-shadow:0 0 2px rgba(0,0,0,0.5);"></div>`;
     }
     const icon = L.divIcon({
         className: '',

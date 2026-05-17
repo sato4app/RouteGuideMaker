@@ -51,7 +51,9 @@ export const MARKER_SHAPES = [
     { value: 'circle',   label: '円' },
     { value: 'square',   label: '四角' },
     { value: 'triangle', label: '三角' },
-    { value: 'diamond',  label: 'ひし形' }
+    { value: 'diamond',  label: 'ひし形' },
+    { value: 'star',     label: '星形' },
+    { value: 'line',     label: '線' }
 ];
 
 // モード定数

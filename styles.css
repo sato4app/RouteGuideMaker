@@ -256,37 +256,22 @@ button:hover {
 
 /* マーカーの設定パネル */
 .marker-settings-section {
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
-}
-
-.marker-settings-section:last-child {
-    border-bottom: none;
-}
-
-.marker-type-title {
-    font-size: 12px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 6px;
-}
-
-.marker-attr-row {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
-    flex-wrap: nowrap;
+    margin-bottom: 10px;
 }
 
-.marker-attr-label {
-    color: #555;
-    white-space: nowrap;
+.marker-type-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #333;
+    min-width: 5.5em;
+    flex-shrink: 0;
 }
 
 .marker-color-input {
-    width: 30px;
+    width: 26px;
     height: 22px;
     padding: 0;
     border: 1px solid #ccc;
@@ -307,12 +292,18 @@ button:hover {
 }
 
 .marker-size-input {
-    width: 42px;
+    width: 36px;
     font-size: 11px;
     padding: 2px 4px;
     border: 1px solid #ccc;
     border-radius: 3px;
     text-align: right;
+    flex-shrink: 0;
+}
+
+.marker-size-unit {
+    font-size: 11px;
+    color: #555;
     flex-shrink: 0;
 }
 
