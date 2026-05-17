@@ -100,149 +100,122 @@ button:hover {
 }
 
 /* ルートガイドの作成・編集パネル */
-.route-guide-section {
-    margin-bottom: 10px;
+.route-guide-panel {
+    border: 2px solid #999;
+    border-radius: 8px;
+    padding: 16px;
+    background: white;
 }
 
-.route-guide-field-row {
+.route-guide-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.route-guide-selector {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
 }
 
-.route-guide-field-label {
+.route-guide-label {
     font-size: 12px;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
-.route-guide-select {
-    flex: 1;
+.route-guide-dropdown-short {
+    width: 4.5em;
+    padding: 5px 22px 5px 6px;
     font-size: 12px;
-    padding: 3px 4px;
-    border: 1px solid #ccc;
+    border: 2px solid #333;
     border-radius: 4px;
-    min-width: 0;
-}
-
-.route-guide-btn-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 6px;
-}
-
-.route-guide-btn-row button {
-    flex: 1;
-    padding: 4px 0;
-    font-size: 12px;
-}
-
-.route-guide-name-input {
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 12px;
-    padding: 4px 6px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 4px;
-}
-
-.route-guide-confirm-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 4px;
-}
-
-.route-guide-confirm-row button {
-    flex: 1;
-    padding: 4px 0;
-    font-size: 12px;
-}
-
-/* ポイントリスト */
-.point-list-section {
-    border-top: 1px solid #ddd;
-    padding-top: 8px;
-}
-
-.point-list-header {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 4px;
-    padding: 0 2px;
-}
-
-.point-no-head {
-    width: 32px;
-    flex-shrink: 0;
-}
-
-.point-id-head {
-    width: 68px;
-    flex-shrink: 0;
-}
-
-.point-name-head {
-    flex: 1;
-}
-
-.point-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 3px;
+    background-color: white;
     cursor: pointer;
-    border-radius: 3px;
-}
-
-.point-row-selected {
-    background-color: #ffe8cc;
-}
-
-.point-no {
-    width: 32px;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="%23333" stroke-width="2" stroke-linecap="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 6px center;
     flex-shrink: 0;
-    font-size: 10px;
-    color: #555;
 }
 
-.point-id-cell {
-    width: 68px;
-    flex-shrink: 0;
-    font-size: 11px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.route-guide-dropdown-short:focus {
+    outline: none;
+    border-color: #0066cc;
 }
 
-.point-name-cell {
+.route-guide-dropdown-long {
     flex: 1;
-    font-size: 11px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.route-guide-edit-btn-row {
-    display: flex;
-    gap: 6px;
-    margin-top: 6px;
-}
-
-.route-guide-edit-btn-row button {
-    flex: 1;
-    padding: 4px 4px;
+    min-width: 0;
+    padding: 5px 22px 5px 6px;
     font-size: 12px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="%23333" stroke-width="2" stroke-linecap="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 6px center;
 }
 
-.route-guide-icon-btn {
-    flex: 1 !important;
-    width: auto !important;
-    padding: 4px 4px !important;
+.route-guide-dropdown-long:focus {
+    outline: none;
+    border-color: #0066cc;
+}
+
+.reset-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 16px;
+    border: 2px solid #666;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.reset-btn:hover {
+    background: #f0f0f0;
+    border-color: #333;
+}
+
+.reset-btn:active {
+    transform: scale(0.95);
+}
+
+.route-guide-path {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.route-guide-dropdown-full {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 28px 6px 8px;
+    font-size: 12px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="%23333" stroke-width="2" stroke-linecap="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+}
+
+.route-guide-dropdown-full:focus {
+    outline: none;
+    border-color: #0066cc;
 }
 
 /* ルートガイド用マーカーの設定パネル */

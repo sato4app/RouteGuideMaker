@@ -57,39 +57,25 @@
         </div>
 
         <!-- ルートガイドの作成・編集パネル -->
-        <div id="routeGuidePanel" style="display: none;">
-            <div class="route-guide-section">
-                <div class="route-guide-field-row">
-                    <label class="route-guide-field-label">ルートガイド</label>
-                    <select id="routeGuideSelect" class="route-guide-select"></select>
-                </div>
-                <div class="route-guide-btn-row">
-                    <button id="routeGuideNewBtn">新規</button>
-                    <button id="routeGuideRenameBtn">名称変更</button>
-                    <button id="routeGuideDeleteBtn">削除</button>
-                </div>
-                <div id="routeGuideNameArea" style="display:none;">
-                    <input type="text" id="routeGuideName" class="route-guide-name-input" placeholder="ルートガイド名を入力">
-                    <div class="route-guide-confirm-row">
-                        <button id="routeGuideConfirmBtn">確定</button>
-                        <button id="routeGuideCancelBtn">キャンセル</button>
-                    </div>
-                </div>
+        <div id="routeGuidePanel" class="route-guide-panel" style="display: none;">
+            <div class="route-guide-title">ルートガイド情報</div>
+
+            <div class="route-guide-selector">
+                <span class="route-guide-label">絞り込み</span>
+                <select class="route-guide-dropdown-short" id="routeStart">
+                    <option value="">－</option>
+                </select>
+                <select class="route-guide-dropdown-long" id="routeEnd">
+                    <option value="">選択</option>
+                </select>
+                <button class="reset-btn" id="resetDropdownBtn" title="ドロップダウンをリセット">↻</button>
             </div>
-            <div class="point-list-section">
-                <div class="point-list-header">
-                    <span class="point-no-head">No.</span>
-                    <span class="point-id-head">Point</span>
-                    <span class="point-name-head">名称</span>
-                </div>
-                <div id="pointListContainer"></div>
-                <div class="route-guide-edit-btn-row">
-                    <button id="editStartBtn">Edit</button>
-                    <button id="fixBtn" disabled>Fix</button>
-                    <button id="pointUpBtn" class="route-guide-icon-btn" disabled title="上へ移動">Up</button>
-                    <button id="pointDownBtn" class="route-guide-icon-btn" disabled title="下へ移動">Down</button>
-                    <button id="pointRemoveBtn" class="route-guide-icon-btn" disabled title="削除">Delete</button>
-                </div>
+
+            <div class="route-guide-path">
+                <span class="route-guide-label">ルート</span>
+                <select class="route-guide-dropdown-full" id="routePath">
+                    <option value="">開始 ～ 終了ポイント</option>
+                </select>
             </div>
         </div>
 
