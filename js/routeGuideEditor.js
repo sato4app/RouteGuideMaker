@@ -21,10 +21,6 @@ let postEndPointId = '';
 export function isEditingMode() { return false; }
 export function getRouteGuides() { return []; }
 export function loadRouteGuides() { /* no-op: 新データモデル未定 */ }
-export function setMarkerColors({ selectedRoute } = {}) {
-    if (selectedRoute !== undefined) SELECTED_ROUTE_STYLE.color = selectedRoute;
-    renderSelectedRoute();
-}
 
 // ========================================
 // 初期化

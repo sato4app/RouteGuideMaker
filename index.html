@@ -30,8 +30,8 @@
                 <span>ルートガイド用写真の選択</span>
             </label>
             <label>
-                <input type="radio" name="mode" value="color">
-                <span>ルートガイド用マーカーの設定</span>
+                <input type="radio" name="mode" value="marker">
+                <span>マーカーの設定</span>
             </label>
         </div>
 
@@ -106,32 +106,11 @@
             </div>
         </div>
 
-        <!-- ルートガイド用マーカーの設定パネル -->
-        <div id="colorPanel" style="display: none;">
-            <div class="color-group-title">選択中ルートガイド</div>
-            <div class="color-row">
-                <label class="color-label">ポイント</label>
-                <input type="text" id="colorSelectedPoint" class="color-input" value="#ff0000">
-                <span class="color-swatch" id="swatchSelectedPoint" style="background:#ff0000;"></span>
-            </div>
-            <div class="color-row">
-                <label class="color-label">ルート</label>
-                <input type="text" id="colorSelectedRoute" class="color-input" value="#ff8c00">
-                <span class="color-swatch" id="swatchSelectedRoute" style="background:#ff8c00;"></span>
-            </div>
-            <div class="color-group-title">その他のルートガイド</div>
-            <div class="color-row">
-                <label class="color-label">ポイント</label>
-                <input type="text" id="colorOtherPoint" class="color-input" value="#f08080">
-                <span class="color-swatch" id="swatchOtherPoint" style="background:#f08080;"></span>
-            </div>
-            <div class="color-row">
-                <label class="color-label">ルート</label>
-                <input type="text" id="colorOtherRoute" class="color-input" value="#d2b48c">
-                <span class="color-swatch" id="swatchOtherRoute" style="background:#d2b48c;"></span>
-            </div>
-            <div class="color-btn-row">
-                <button id="colorResetBtn">デフォルト値に戻す</button>
+        <!-- マーカーの設定パネル -->
+        <div id="markerPanel" style="display: none;">
+            <div id="markerSettingsContainer"></div>
+            <div class="marker-btn-row">
+                <button id="markerResetBtn">デフォルト値に戻す</button>
             </div>
         </div>
     </div>

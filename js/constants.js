@@ -13,28 +13,6 @@ export const DEFAULTS = {
     // Excel読み込み制限
     MAX_EXCEL_ROWS: 1000,
 
-    // ポイントGPS (Excel): 緑の円形
-    GPS_POINT_STYLE: {
-        radius: 6,
-        fillColor: '#008000',
-        color: '#008000',
-        weight: 0,
-        stroke: false,
-        opacity: 1,
-        fillOpacity: 1
-    },
-
-    // ポイント (GeoJSON): aquamarine の円形
-    POINT_STYLE: {
-        radius: 6,
-        fillColor: '#7fffd4',
-        color: '#7fffd4',
-        weight: 0,
-        stroke: false,
-        opacity: 1,
-        fillOpacity: 1
-    },
-
     // ルートスタイル（interactive: false でマーカーへのクリックを妨げない）
     ROUTE_STYLE: {
         color: '#4682b4',
@@ -44,10 +22,42 @@ export const DEFAULTS = {
     }
 };
 
+// マーカー種別ごとのデフォルト設定（色・形状・サイズ）
+// shape: 'circle' | 'square' | 'triangle' | 'diamond'
+// size: 半径相当のピクセル値
+export const MARKER_DEFAULTS = {
+    pointGps: {
+        label: 'ポイントGPS',
+        color: '#008000',
+        shape: 'circle',
+        size: 6
+    },
+    point: {
+        label: 'ポイント',
+        color: '#7fffd4',
+        shape: 'circle',
+        size: 6
+    },
+    spot: {
+        label: 'スポット',
+        color: '#9acd32',
+        shape: 'square',
+        size: 8
+    }
+};
+
+// 選択可能なマーカー形状
+export const MARKER_SHAPES = [
+    { value: 'circle',   label: '円' },
+    { value: 'square',   label: '四角' },
+    { value: 'triangle', label: '三角' },
+    { value: 'diamond',  label: 'ひし形' }
+];
+
 // モード定数
 export const MODES = {
     FILEIO: 'fileio',
     ROUTE_GUIDE: 'routeGuide',
     PHOTO: 'photo',
-    COLOR: 'color'
+    MARKER: 'marker'
 };

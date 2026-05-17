@@ -1,6 +1,7 @@
 // ファイル入出力機能
 
 import { DEFAULTS } from './constants.js';
+import { createMarker } from './markerSettings.js';
 import { showMessage } from './message.js';
 import { loadExcelFile } from './excelLoader.js';
 import { getRouteGuides, loadRouteGuides } from './routeGuideEditor.js';
@@ -18,6 +19,18 @@ const geojsonPointStore = new Map();
 const spotStore = [];
 
 // ========================================
+// 種別ごとのマーカー生成データ（refreshMarkersでの再生成に使用）
+// ========================================
+const markerDataByType = {
+    pointGps: [], // { id, name, lat, lng }
+    point:    [], // { id, lat, lng }
+    spot:     []  // { name, lat, lng }
+};
+
+// dataLayer の参照（setup関数で設定）
+let _dataLayer = null;
+
+// ========================================
 // ルートガイドオーバーレイ用ストア（routeGuideEditorが参照）
 // ========================================
 // GPS・GeoJSONポイント: pointId -> Leafletマーカー
@@ -28,21 +41,15 @@ export const routeFeatureStore = [];
 /**
  * ルート端点の座標を検索する
  * 優先順位: ポイントGPS > GeoJSONポイント > スポット(名称一致、複数なら最近傍)
- * @param {string} id - 検索するID/名称
- * @param {number} refLat - 最近傍判定の基準緯度（スポット検索時）
- * @param {number} refLng - 最近傍判定の基準経度（スポット検索時）
- * @returns {{lat, lng}|null}
  */
 function findEndpoint(id, refLat, refLng) {
     if (gpsPointStore.has(id)) return gpsPointStore.get(id);
     if (geojsonPointStore.has(id)) return geojsonPointStore.get(id);
 
-    // スポットを名称で検索
     const matches = spotStore.filter(s => s.name === id);
     if (matches.length === 0) return null;
     if (matches.length === 1) return matches[0];
 
-    // 複数一致 → 基準点に最も近いものを返す
     let nearest = null;
     let minDist = Infinity;
     for (const s of matches) {
@@ -69,6 +76,56 @@ function classifyFeature(f) {
 }
 
 // ========================================
+// マーカー生成ヘルパー（種別に応じてポップアップも設定）
+// ========================================
+function buildPointGpsMarker(data) {
+    const m = createMarker('pointGps', [data.lat, data.lng]);
+    m.bindPopup(`${data.id}<br>${data.name}<br>(PointGPS)`);
+    return m;
+}
+
+function buildPointMarker(data) {
+    const m = createMarker('point', [data.lat, data.lng]);
+    m.bindPopup(`${data.id}<br>(Point)`);
+    return m;
+}
+
+function buildSpotMarker(data) {
+    const m = createMarker('spot', [data.lat, data.lng]);
+    m.bindPopup(`${data.name}<br>(Spot)`);
+    return m;
+}
+
+// ========================================
+// 全マーカー再生成（マーカー設定変更時に呼び出す）
+// ========================================
+export function refreshMarkers() {
+    if (!_dataLayer) return;
+
+    // 既存マーカーを一旦すべて除去
+    markerStore.forEach(m => _dataLayer.removeLayer(m));
+    markerStore.clear();
+
+    // ポイントGPS
+    markerDataByType.pointGps.forEach(d => {
+        const m = buildPointGpsMarker(d);
+        markerStore.set(d.id, m);
+        _dataLayer.addLayer(m);
+    });
+    // ポイント (GeoJSON)
+    markerDataByType.point.forEach(d => {
+        const m = buildPointMarker(d);
+        if (d.id) markerStore.set(d.id, m);
+        _dataLayer.addLayer(m);
+    });
+    // スポット (GeoJSON)
+    markerDataByType.spot.forEach(d => {
+        const m = buildSpotMarker(d);
+        _dataLayer.addLayer(m);
+    });
+}
+
+// ========================================
 // 読み込み種別選択モーダル
 // ========================================
 function showImportModal(features) {
@@ -83,7 +140,6 @@ function showImportModal(features) {
         document.getElementById('importRouteCount').textContent = `${counts.route}本`;
         document.getElementById('importSpotCount').textContent = `${counts.spot}個`;
 
-        // デフォルト: ポイントはオフ、ルート・スポットはオン
         document.getElementById('importPoint').checked = false;
         document.getElementById('importRoute').checked = counts.route > 0;
         document.getElementById('importSpot').checked = counts.spot > 0;
@@ -121,6 +177,7 @@ function showImportModal(features) {
 // ポイントGPS(Excel)の読み込み
 // ========================================
 export function setupExcelInput(dataLayer) {
+    _dataLayer = dataLayer;
     document.getElementById('excelInput').addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -137,13 +194,13 @@ export function setupExcelInput(dataLayer) {
                 const pid = String(p.pointId);
                 const pname = p.name || '';
 
-                // ストアに登録（ルート端点検索用）
                 gpsPointStore.set(pid, { lat: p.lat, lng: p.lng });
                 if (p.elevation !== undefined) elevationStore.set(pid, p.elevation);
 
-                // 地図に表示
-                const marker = L.circleMarker([p.lat, p.lng], DEFAULTS.GPS_POINT_STYLE);
-                marker.bindPopup(`${pid}<br>${pname}<br>(PointGPS)`);
+                const data = { id: pid, name: pname, lat: p.lat, lng: p.lng };
+                markerDataByType.pointGps.push(data);
+
+                const marker = buildPointGpsMarker(data);
                 markerStore.set(pid, marker);
                 dataLayer.addLayer(marker);
             });
@@ -161,11 +218,11 @@ export function setupExcelInput(dataLayer) {
 // ルート(GeoJSON)ファイルの読み込み
 // ========================================
 export function setupGeoJsonInput(dataLayer) {
+    _dataLayer = dataLayer;
     document.getElementById('geojsonInput').addEventListener('change', async function (e) {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // 全ファイルのフィーチャーを収集
         const allFeatures = [];
         for (const file of files) {
             try {
@@ -183,12 +240,10 @@ export function setupGeoJsonInput(dataLayer) {
 
         if (allFeatures.length === 0) { this.value = ''; return; }
 
-        // モーダルで読み込み種別を選択
         const selection = await showImportModal(allFeatures);
         if (!selection) { this.value = ''; return; }
 
-        // ─── 第1パス: ポイント・スポットをストアに登録 ───
-        // 選択状態に関わらず全ポイント/スポットを登録（ルート端点検索に使用）
+        // ─── 第1パス: ポイント・スポットをストアに登録（ルート端点検索用） ───
         allFeatures.forEach(f => {
             const cls = classifyFeature(f);
             const props = f.properties || {};
@@ -213,11 +268,9 @@ export function setupGeoJsonInput(dataLayer) {
             const props = f.properties || {};
             const waypointCoords = f.geometry.coordinates.map(c => [c[1], c[0]]);
 
-            // startPoint / endPoint プロパティから開始・終了ポイントIDを取得
             const startId = props.startPoint != null ? String(props.startPoint) : null;
             const endId   = props.endPoint   != null ? String(props.endPoint)   : null;
 
-            // 基準点: 中間点の先頭・末尾（最近傍スポット判定用）
             const refFirst = waypointCoords.length > 0 ? waypointCoords[0] : [0, 0];
             const refLast  = waypointCoords.length > 0 ? waypointCoords[waypointCoords.length - 1] : [0, 0];
 
@@ -230,7 +283,6 @@ export function setupGeoJsonInput(dataLayer) {
                 ...(endCoord   ? [[endCoord.lat,   endCoord.lng]]   : [])
             ];
 
-            // 選択状態に関わらず常にストアに登録（ルートガイドエディタのルート検索に使用）
             routeFeatureStore.push({ startId, endId, coords: fullCoords });
 
             if (selection.route) {
@@ -249,26 +301,20 @@ export function setupGeoJsonInput(dataLayer) {
             const name = props.name || '';
 
             if (cls === 'point') {
-                // ポイント: aquamarine の円形、ポイントID + "Point"
                 const [lng, lat] = f.geometry.coordinates;
-                const pointId = props.id || props.pointId || '';
-                const marker = L.circleMarker([lat, lng], DEFAULTS.POINT_STYLE);
-                marker.bindPopup(`${pointId}<br>(Point)`);
-                if (pointId) markerStore.set(String(pointId), marker);
+                const id = String(props.id || props.pointId || '');
+                const data = { id, lat, lng };
+                markerDataByType.point.push(data);
+                const marker = buildPointMarker(data);
+                if (id) markerStore.set(id, marker);
                 dataLayer.addLayer(marker);
                 count++;
 
             } else if (cls === 'spot') {
-                // スポット: yellowgreen の正方形、スポット名 + "Spot"
                 const [lng, lat] = f.geometry.coordinates;
-                const icon = L.divIcon({
-                    className: '',
-                    html: '<div style="width:8px;height:8px;background:#9acd32;border:1px solid white;box-shadow:0 0 2px rgba(0,0,0,0.5);"></div>',
-                    iconSize: [8, 8],
-                    iconAnchor: [4, 4]
-                });
-                const marker = L.marker([lat, lng], { icon });
-                marker.bindPopup(`${name}<br>(Spot)`);
+                const data = { name, lat, lng };
+                markerDataByType.spot.push(data);
+                const marker = buildSpotMarker(data);
                 dataLayer.addLayer(marker);
                 count++;
             }
@@ -276,7 +322,6 @@ export function setupGeoJsonInput(dataLayer) {
 
         if (count > 0) showMessage(`${count}件のデータを読み込みました`);
 
-        // ルートガイドエディタにストア更新を通知
         document.dispatchEvent(new CustomEvent('routeStoreUpdated'));
 
         this.value = '';
@@ -287,24 +332,15 @@ export function setupGeoJsonInput(dataLayer) {
 // ルートガイドのファイル出力（GeoJSON）
 // ========================================
 
-/**
- * [lng, lat] に標高があれば [lng, lat, elevation] を返すヘルパー
- */
 function withElev(lng, lat, pointId) {
     const e = elevationStore.get(pointId);
     return e !== undefined ? [lng, lat, e] : [lng, lat];
 }
 
-/**
- * ルートガイドの全座標を GeoJSON 用 [lng, lat(, elevation)] 配列として組み立てる
- * GPSポイント位置（セグメントの先頭・末尾）に標高値があれば第3要素として付加する
- * キャッシュ済みセグメントを優先し、未キャッシュはマーカーストアから直線で補完する
- */
 function buildRouteGuideCoords(routeGuide) {
     const { points, segmentRoutes } = routeGuide;
     if (points.length === 0) return [];
 
-    // ポイントが1つだけ
     if (points.length === 1) {
         const m = markerStore.get(points[0].pointId);
         if (!m) return [];
@@ -314,26 +350,22 @@ function buildRouteGuideCoords(routeGuide) {
 
     const coords = [];
     for (let i = 0; i < points.length - 1; i++) {
-        const seg = segmentRoutes[i]; // [[lat, lng], ...] (Leaflet形式)
+        const seg = segmentRoutes[i];
         const startId = points[i].pointId;
         const endId   = points[i + 1].pointId;
 
         if (seg && seg.length > 0) {
-            // Leaflet [lat, lng] → GeoJSON [lng, lat(, elev)] に変換
-            // セグメントの先頭 = points[i]、末尾 = points[i+1] の位置
             const converted = seg.map((c, idx) => {
                 if (idx === 0)             return withElev(c[1], c[0], startId);
                 if (idx === seg.length - 1) return withElev(c[1], c[0], endId);
-                return [c[1], c[0]]; // 中間ウェイポイントは標高なし
+                return [c[1], c[0]];
             });
             if (i === 0) {
                 coords.push(...converted);
             } else {
-                // 先頭座標は前セグメントの末尾と重複するためスキップ
                 coords.push(...converted.slice(1));
             }
         } else {
-            // 未キャッシュ: マーカーストアから直線で補完
             if (i === 0) {
                 const m0 = markerStore.get(startId);
                 if (m0) {
@@ -372,7 +404,6 @@ export function setupExportButton() {
                     name: rg.name,
                     fixed: rg.fixed,
                     points: rg.points.map(p => ({ pointId: p.pointId, name: p.name })),
-                    // 再読み込み用: セグメントルートを [lng, lat] 形式で保存
                     segments: rg.segmentRoutes.map(seg =>
                         seg ? seg.map(coord => [coord[1], coord[0]]) : null
                     )
@@ -424,7 +455,6 @@ export function setupImportRouteGuideButton() {
                         pointId: String(p.pointId),
                         name: p.name || ''
                     }));
-                    // segments: [lng, lat] → Leaflet [lat, lng] に戻す
                     const segsRaw = Array.isArray(props.segments)
                         ? props.segments
                         : new Array(Math.max(0, points.length - 1)).fill(null);
