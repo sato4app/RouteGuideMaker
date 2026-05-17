@@ -1,7 +1,6 @@
 // ファイル入出力機能
 
-import { DEFAULTS } from './constants.js';
-import { createMarker } from './markerSettings.js';
+import { createMarker, getLineStyle } from './markerSettings.js';
 import { showMessage } from './message.js';
 import { loadExcelFile } from './excelLoader.js';
 import { getRouteGuides, loadRouteGuides } from './routeGuideEditor.js';
@@ -37,6 +36,8 @@ let _dataLayer = null;
 export const markerStore = new Map();
 // ルートフィーチャー: [{startId, endId, coords: [[lat,lng],...]}]
 export const routeFeatureStore = [];
+// ルート線レイヤー: ルート線(LineString)はここに集約し、設定変更時にスタイル更新
+export const routeLineLayer = L.layerGroup();
 
 /**
  * ルート端点の座標を検索する
@@ -94,6 +95,18 @@ function buildSpotMarker(data) {
     const m = createMarker('spot', [data.lat, data.lng]);
     m.bindPopup(`${data.name}<br>(Spot)`);
     return m;
+}
+
+// ========================================
+// 全ルート線のスタイル更新（マーカー設定変更時に呼び出す）
+// ========================================
+export function refreshRoutes() {
+    const style = getLineStyle('route');
+    routeLineLayer.eachLayer(layer => {
+        if (typeof layer.setStyle === 'function') {
+            layer.setStyle(style);
+        }
+    });
 }
 
 // ========================================
@@ -178,6 +191,10 @@ function showImportModal(features) {
 // ========================================
 export function setupExcelInput(dataLayer) {
     _dataLayer = dataLayer;
+    // ルート線レイヤーをdataLayer配下に組み込む（最初の1回だけ）
+    if (!dataLayer.hasLayer(routeLineLayer)) {
+        dataLayer.addLayer(routeLineLayer);
+    }
     document.getElementById('excelInput').addEventListener('change', async function (e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -286,7 +303,7 @@ export function setupGeoJsonInput(dataLayer) {
             routeFeatureStore.push({ startId, endId, coords: fullCoords });
 
             if (selection.route) {
-                L.polyline(fullCoords, DEFAULTS.ROUTE_STYLE).addTo(dataLayer);
+                L.polyline(fullCoords, getLineStyle('route')).addTo(routeLineLayer);
                 count++;
             }
         });

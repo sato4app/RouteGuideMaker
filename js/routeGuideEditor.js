@@ -1,16 +1,11 @@
 // ルートガイドの作成・編集
 
+import { createMarker, getLineStyle } from './markerSettings.js';
+
 let _map = null;
 let _markerStore = null;
 let _routeFeatureStore = null;
 let highlightLayer = null;
-
-const SELECTED_ROUTE_STYLE = {
-    color: '#ff8c00',
-    weight: 5,
-    opacity: 0.95,
-    interactive: false
-};
 
 // 選択状態
 let selectedRouteIndex = -1;
@@ -40,6 +35,8 @@ export function setupRouteGuideEditor(map, markerStore, routeFeatureStore) {
 
     // ルート読み込み時にドロップダウンを更新
     document.addEventListener('routeStoreUpdated', updateAllDropdowns);
+    // マーカー設定変更時にハイライトを再描画
+    document.addEventListener('markerSettingsChanged', renderHighlights);
 
     updateAllDropdowns();
     renderPointsList();
@@ -139,14 +136,14 @@ function updatePathDropdown() {
         selectedRouteIndex = parseInt(prev, 10);
     } else {
         selectedRouteIndex = -1;
-        renderSelectedRoute();
+        renderHighlights();
     }
 
     updateAdjacentDropdowns();
 }
 
 // ========================================
-// 開始前ポイント／終了後ポイントの選択候補
+// 前ポイント／後ポイントの選択候補
 // ========================================
 function getConnectedPoints(anchorId, excludeId) {
     const candidates = new Set();
@@ -173,6 +170,7 @@ function updateAdjacentDropdowns() {
         preStartPointId = '';
         postEndPointId = '';
         renderPointsList();
+        renderHighlights();
         return;
     }
 
@@ -186,13 +184,13 @@ function updateAdjacentDropdowns() {
     preSel.disabled = preCandidates.length === 0;
     postSel.disabled = postCandidates.length === 0;
 
-    // 候補に含まれない選択値はクリア
     if (preStartPointId && !preCandidates.includes(preStartPointId)) preStartPointId = '';
     if (postEndPointId && !postCandidates.includes(postEndPointId)) postEndPointId = '';
     preSel.value = preStartPointId;
     postSel.value = postEndPointId;
 
     renderPointsList();
+    renderHighlights();
 }
 
 function fillDropdown(sel, ids, currentValue) {
@@ -239,18 +237,19 @@ function onRoutePathChange() {
     // 基本ルートが変わったら隣接ポイント選択をクリア
     preStartPointId = '';
     postEndPointId = '';
-    renderSelectedRoute();
     updateAdjacentDropdowns();
 }
 
 function onPreStartChange() {
     preStartPointId = document.getElementById('preStartPoint').value;
     renderPointsList();
+    renderHighlights();
 }
 
 function onPostEndChange() {
     postEndPointId = document.getElementById('postEndPoint').value;
     renderPointsList();
+    renderHighlights();
 }
 
 function resetDropdowns() {
@@ -262,17 +261,54 @@ function resetDropdowns() {
     postEndPointId = '';
     updateEndDropdown();
     updatePathDropdown();
-    renderSelectedRoute();
 }
 
 // ========================================
-// 選択ルートのハイライト描画
+// ハイライト描画
+//   ・ルート前後（前ポイント→開始、終了→後ポイント の線）
+//   ・基本ルート（選択中ルート）
+//   ・選択中ポイント（基本ルートの開始/終了、前/後ポイントのマーカー）
 // ========================================
-function renderSelectedRoute() {
+function findRouteBetween(idA, idB) {
+    return _routeFeatureStore.find(r =>
+        (r.startId === idA && r.endId === idB) ||
+        (r.startId === idB && r.endId === idA)
+    );
+}
+
+function renderHighlights() {
     if (!highlightLayer) return;
     highlightLayer.clearLayers();
     if (selectedRouteIndex < 0 || selectedRouteIndex >= _routeFeatureStore.length) return;
-    const r = _routeFeatureStore[selectedRouteIndex];
-    if (!r || !r.coords || r.coords.length === 0) return;
-    L.polyline(r.coords, SELECTED_ROUTE_STYLE).addTo(highlightLayer);
+
+    const basic = _routeFeatureStore[selectedRouteIndex];
+
+    // ─── ルート前後（基本ルートの下に重ねるため先に描画） ───
+    if (preStartPointId && basic.startId) {
+        const r = findRouteBetween(preStartPointId, basic.startId);
+        if (r && r.coords && r.coords.length > 0) {
+            L.polyline(r.coords, getLineStyle('routeAdjacent')).addTo(highlightLayer);
+        }
+    }
+    if (postEndPointId && basic.endId) {
+        const r = findRouteBetween(basic.endId, postEndPointId);
+        if (r && r.coords && r.coords.length > 0) {
+            L.polyline(r.coords, getLineStyle('routeAdjacent')).addTo(highlightLayer);
+        }
+    }
+
+    // ─── 選択中ルート ───
+    if (basic.coords && basic.coords.length > 0) {
+        L.polyline(basic.coords, getLineStyle('selectedRoute')).addTo(highlightLayer);
+    }
+
+    // ─── 選択中ポイント（基本ルートの開始・終了、前ポイント、後ポイント） ───
+    const selectedIds = [basic.startId, basic.endId, preStartPointId, postEndPointId]
+        .filter(id => id);
+    selectedIds.forEach(id => {
+        const m = _markerStore && _markerStore.get(id);
+        if (!m) return;
+        const overlay = createMarker('selectedPoint', m.getLatLng());
+        overlay.addTo(highlightLayer);
+    });
 }

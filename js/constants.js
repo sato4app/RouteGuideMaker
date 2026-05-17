@@ -22,24 +22,56 @@ export const DEFAULTS = {
     }
 };
 
-// マーカー種別ごとのデフォルト設定（色・形状・サイズ）
-// shape: 'circle' | 'square' | 'triangle' | 'diamond'
-// size: 半径相当のピクセル値
+// マーカー／ルート種別ごとのデフォルト設定
+// kind: 'point' (マーカー) | 'line' (ルート線)
+// shape: kind=='point' で有効。'circle' | 'square' | 'triangle' | 'diamond' | 'star' | 'line'
+// size: kind=='point' は半径相当ピクセル、kind=='line' は線の太さ
 export const MARKER_DEFAULTS = {
     pointGps: {
         label: 'ポイントGPS',
+        kind: 'point',
         color: '#008000',
         shape: 'circle',
         size: 6
     },
     point: {
         label: 'ポイント',
+        kind: 'point',
         color: '#7fffd4',
         shape: 'circle',
         size: 6
     },
+    selectedPoint: {
+        label: '選択中ポイント',
+        kind: 'point',
+        color: '#ff0000',
+        shape: 'circle',
+        size: 8
+    },
+    route: {
+        label: 'ルート',
+        kind: 'line',
+        color: '#4682b4',
+        shape: 'line',
+        size: 3
+    },
+    selectedRoute: {
+        label: '選択中ルート',
+        kind: 'line',
+        color: '#ff8c00',
+        shape: 'line',
+        size: 5
+    },
+    routeAdjacent: {
+        label: 'ルート前後',
+        kind: 'line',
+        color: '#ffa500',
+        shape: 'line',
+        size: 4
+    },
     spot: {
         label: 'スポット',
+        kind: 'point',
         color: '#9acd32',
         shape: 'square',
         size: 8

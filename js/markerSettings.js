@@ -14,6 +14,18 @@ export function resetMarkerSettings() {
     });
 }
 
+// 線(ルート/選択中ルート/ルート前後)用のスタイル取得
+// kind='line' の項目で使用する Leaflet polyline オプション
+export function getLineStyle(type) {
+    const cfg = markerSettings[type];
+    return {
+        color: cfg.color,
+        weight: cfg.size,
+        opacity: 0.85,
+        interactive: false
+    };
+}
+
 // 指定された種別の現在の設定でマーカーを生成
 // shape='circle' は L.circleMarker、その他は L.marker + divIcon
 export function createMarker(type, latlng) {

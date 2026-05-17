@@ -2,7 +2,7 @@
 
 import { MODES, MARKER_SHAPES } from './constants.js';
 import { initializeMap } from './mapCore.js';
-import { setupExcelInput, setupGeoJsonInput, setupExportButton, setupImportRouteGuideButton, refreshMarkers, markerStore, routeFeatureStore } from './fileIO.js';
+import { setupExcelInput, setupGeoJsonInput, setupExportButton, setupImportRouteGuideButton, refreshMarkers, refreshRoutes, markerStore, routeFeatureStore } from './fileIO.js';
 import { setupRouteGuideEditor } from './routeGuideEditor.js';
 import { markerSettings, resetMarkerSettings } from './markerSettings.js';
 
@@ -94,6 +94,12 @@ function renderMarkerSettings() {
     });
 }
 
+function applyAllSettings() {
+    refreshMarkers();
+    refreshRoutes();
+    document.dispatchEvent(new CustomEvent('markerSettingsChanged'));
+}
+
 function onMarkerSettingChange(e) {
     const type = e.target.dataset.type;
     const attr = e.target.dataset.attr;
@@ -105,14 +111,14 @@ function onMarkerSettingChange(e) {
         e.target.value = value;
     }
     markerSettings[type][attr] = value;
-    refreshMarkers();
+    applyAllSettings();
 }
 
 // デフォルト値に戻すボタン
 document.getElementById('markerResetBtn').addEventListener('click', () => {
     resetMarkerSettings();
     renderMarkerSettings();
-    refreshMarkers();
+    applyAllSettings();
 });
 
 // 初期描画

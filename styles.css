@@ -266,8 +266,11 @@ button:hover {
     font-size: 12px;
     font-weight: bold;
     color: #333;
-    min-width: 5.5em;
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .marker-color-input {
@@ -282,17 +285,21 @@ button:hover {
 }
 
 .marker-shape-select {
-    flex: 1;
-    min-width: 0;
+    width: 4.5em;
     font-size: 11px;
-    padding: 2px 4px;
+    padding: 2px 18px 2px 4px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    background: white;
+    background-color: white;
+    flex-shrink: 0;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="%23333" stroke-width="1.5" stroke-linecap="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 4px center;
 }
 
 .marker-size-input {
-    width: 36px;
+    width: 32px;
     font-size: 11px;
     padding: 2px 4px;
     border: 1px solid #ccc;
