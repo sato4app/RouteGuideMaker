@@ -278,14 +278,16 @@ function findRouteBetween(idA, idB) {
     );
 }
 
-// ルートのうち anchorId 端点側から、中間点数の1/3 までの座標列を返す
-// 中間点 = 端点を除いた内部の点。1/3はceilで切り上げ。
-// 端点を1点 + 1/3の中間点 を含めた連続座標を返す。
+// ルートのうち anchorId 端点側から、中間点数の一定割合までの座標列を返す
+// 中間点 = 端点を除いた内部の点
+// 割合: 中間点数 <= 9 なら 2/3、> 9 なら 1/3 (切り上げ)
+// 端点を1点 + 割合分の中間点 を含めた連続座標を返す
 function getPartialFromAnchor(route, anchorId) {
     if (!route || !route.coords || route.coords.length < 2) return null;
     const n = route.coords.length;
     const waypointCount = Math.max(0, n - 2);
-    const takeWaypoints = Math.ceil(waypointCount / 3);
+    const numerator = waypointCount <= 9 ? 2 : 1;
+    const takeWaypoints = Math.ceil(waypointCount * numerator / 3);
     const takeCoords = Math.max(2, takeWaypoints + 1); // 最低2点で線を成立
 
     if (route.startId === anchorId) {

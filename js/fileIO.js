@@ -26,6 +26,14 @@ const markerDataByType = {
     spot:     []  // { name, lat, lng }
 };
 
+// 現在地図に表示中のマーカーインスタンス（種別ごと）
+// refreshMarkers時にこれらを地図から除去してから再生成する
+const markerInstancesByType = {
+    pointGps: [],
+    point:    [],
+    spot:     []
+};
+
 // dataLayer の参照（setup関数で設定）
 let _dataLayer = null;
 
@@ -115,25 +123,31 @@ export function refreshRoutes() {
 export function refreshMarkers() {
     if (!_dataLayer) return;
 
-    // 既存マーカーを一旦すべて除去
-    markerStore.forEach(m => _dataLayer.removeLayer(m));
+    // 既存マーカー(全種別)を地図から除去
+    Object.values(markerInstancesByType).forEach(arr => {
+        arr.forEach(m => _dataLayer.removeLayer(m));
+        arr.length = 0;
+    });
     markerStore.clear();
 
     // ポイントGPS
     markerDataByType.pointGps.forEach(d => {
         const m = buildPointGpsMarker(d);
+        markerInstancesByType.pointGps.push(m);
         markerStore.set(d.id, m);
         _dataLayer.addLayer(m);
     });
     // ポイント (GeoJSON)
     markerDataByType.point.forEach(d => {
         const m = buildPointMarker(d);
+        markerInstancesByType.point.push(m);
         if (d.id) markerStore.set(d.id, m);
         _dataLayer.addLayer(m);
     });
     // スポット (GeoJSON)
     markerDataByType.spot.forEach(d => {
         const m = buildSpotMarker(d);
+        markerInstancesByType.spot.push(m);
         _dataLayer.addLayer(m);
     });
 }
@@ -218,6 +232,7 @@ export function setupExcelInput(dataLayer) {
                 markerDataByType.pointGps.push(data);
 
                 const marker = buildPointGpsMarker(data);
+                markerInstancesByType.pointGps.push(marker);
                 markerStore.set(pid, marker);
                 dataLayer.addLayer(marker);
             });
@@ -323,6 +338,7 @@ export function setupGeoJsonInput(dataLayer) {
                 const data = { id, lat, lng };
                 markerDataByType.point.push(data);
                 const marker = buildPointMarker(data);
+                markerInstancesByType.point.push(marker);
                 if (id) markerStore.set(id, marker);
                 dataLayer.addLayer(marker);
                 count++;
@@ -332,6 +348,7 @@ export function setupGeoJsonInput(dataLayer) {
                 const data = { name, lat, lng };
                 markerDataByType.spot.push(data);
                 const marker = buildSpotMarker(data);
+                markerInstancesByType.spot.push(marker);
                 dataLayer.addLayer(marker);
                 count++;
             }
