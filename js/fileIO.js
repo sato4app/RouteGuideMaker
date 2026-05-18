@@ -165,21 +165,19 @@ export function refreshMarkers() {
 // ========================================
 function showImportModal(features) {
     return new Promise((resolve) => {
-        const counts = { point: 0, route: 0, spot: 0, photo: 0 };
+        const counts = { point: 0, route: 0, spot: 0 };
         features.forEach(f => {
             const cls = classifyFeature(f);
-            if (cls) counts[cls]++;
+            if (cls === 'point' || cls === 'route' || cls === 'spot') counts[cls]++;
         });
 
         document.getElementById('importPointCount').textContent = `${counts.point}点`;
         document.getElementById('importRouteCount').textContent = `${counts.route}本`;
         document.getElementById('importSpotCount').textContent = `${counts.spot}個`;
-        document.getElementById('importPhotoCount').textContent = `${counts.photo}枚`;
 
         document.getElementById('importPoint').checked = false;
         document.getElementById('importRoute').checked = counts.route > 0;
         document.getElementById('importSpot').checked = counts.spot > 0;
-        document.getElementById('importPhoto').checked = counts.photo > 0;
 
         const modal = document.getElementById('geojsonImportModal');
         modal.style.display = 'flex';
@@ -197,8 +195,7 @@ function showImportModal(features) {
             const selection = {
                 point: document.getElementById('importPoint').checked,
                 route: document.getElementById('importRoute').checked,
-                spot: document.getElementById('importSpot').checked,
-                photo: document.getElementById('importPhoto').checked
+                spot: document.getElementById('importSpot').checked
             };
             cleanup();
             resolve(selection);
@@ -334,28 +331,15 @@ export function setupGeoJsonInput(dataLayer) {
             }
         });
 
-        // ─── 第3パス: ポイント・スポット・写真を選択された場合に登録 ───
-        // 写真はストアに登録するのみで、地図への描画はrouteGuideEditor側でルート選択時に行う
+        // ─── 第3パス: ポイント・スポットを選択された場合に登録 ───
+        // (写真は「ルートガイド用写真の選択」パネルから別途読み込む)
         allFeatures.forEach(f => {
             const cls = classifyFeature(f);
-            if (cls !== 'point' && cls !== 'spot' && cls !== 'photo') return;
+            if (cls !== 'point' && cls !== 'spot') return;
             if (!selection[cls]) return;
 
             const props = f.properties || {};
             const name = props.name || '';
-
-            if (cls === 'photo') {
-                const [lng, lat] = f.geometry.coordinates;
-                markerDataByType.photo.push({
-                    lat, lng,
-                    thumbnailUrl: props.thumbnailUrl || '',
-                    fullUrl: props.fullUrl || '',
-                    fileName: props.fileName || '',
-                    sourceKmz: props.sourceKmz || ''
-                });
-                count++;
-                return;
-            }
 
             if (cls === 'point') {
                 const [lng, lat] = f.geometry.coordinates;
@@ -382,10 +366,73 @@ export function setupGeoJsonInput(dataLayer) {
         if (count > 0) showMessage(`${count}件のデータを読み込みました`);
 
         document.dispatchEvent(new CustomEvent('routeStoreUpdated'));
-        document.dispatchEvent(new CustomEvent('photoStoreUpdated'));
 
         this.value = '';
     });
+}
+
+// ========================================
+// ルートガイド用写真の選択 - 写真GeoJSONの読み込み
+// ========================================
+function updatePhotoCountDisplay() {
+    const el = document.getElementById('photoCountDisplay');
+    if (el) el.textContent = `読み込み済み: ${markerDataByType.photo.length}枚`;
+}
+
+export function setupPhotoInput() {
+    document.getElementById('photoGeojsonInput').addEventListener('change', async function (e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        let count = 0;
+        for (const file of files) {
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
+                if (!json.features || !Array.isArray(json.features)) {
+                    showMessage(`読み込みエラー (${file.name}): 有効なGeoJSONではありません`, 'error');
+                    continue;
+                }
+                json.features.forEach(f => {
+                    if (!f.geometry || f.geometry.type !== 'Point') return;
+                    const props = f.properties || {};
+                    if (props.type !== 'photo') return;
+                    const [lng, lat] = f.geometry.coordinates;
+                    markerDataByType.photo.push({
+                        lat, lng,
+                        thumbnailUrl: props.thumbnailUrl || '',
+                        fullUrl: props.fullUrl || '',
+                        fileName: props.fileName || '',
+                        sourceKmz: props.sourceKmz || ''
+                    });
+                    count++;
+                });
+            } catch (error) {
+                showMessage(`読み込みエラー (${file.name}): ${error.message}`, 'error');
+            }
+        }
+
+        if (count > 0) {
+            showMessage(`${count}枚の写真を読み込みました`);
+            updatePhotoCountDisplay();
+            document.dispatchEvent(new CustomEvent('photoStoreUpdated'));
+        } else {
+            showMessage('写真フィーチャー(type=photo)が見つかりませんでした', 'warning');
+        }
+
+        this.value = '';
+    });
+
+    // 「読み込み済み写真をクリア」ボタン
+    const clearBtn = document.getElementById('photoClearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            markerDataByType.photo.length = 0;
+            updatePhotoCountDisplay();
+            document.dispatchEvent(new CustomEvent('photoStoreUpdated'));
+            showMessage('読み込み済み写真をクリアしました');
+        });
+    }
 }
 
 // ========================================

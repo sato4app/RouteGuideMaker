@@ -326,6 +326,30 @@ button:hover {
     font-size: 12px;
 }
 
+/* ルートガイド用写真の選択パネル */
+.photo-count-display {
+    font-size: 12px;
+    color: #333;
+    padding: 4px 0;
+}
+
+.photo-help-note {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.4;
+    padding-top: 4px;
+}
+
+#photoGeojsonInput {
+    display: none;
+}
+
+#photoClearBtn {
+    width: 100%;
+    padding: 6px 0;
+    font-size: 12px;
+}
+
 /* プレースホルダーパネル */
 .placeholder-panel {
     border: 2px solid #ccc;

@@ -100,9 +100,20 @@
 
         <!-- ルートガイド用写真の選択パネル -->
         <div id="photoPanel" style="display: none;">
-            <div class="placeholder-panel">
-                <p>ルートガイド用写真の選択</p>
-                <p class="placeholder-note">（仕様検討中）</p>
+            <div class="io-controls">
+                <div class="io-row">
+                    <label for="photoGeojsonInput" class="file-input-label">写真(GeoJSON)ファイルの読み込み</label>
+                    <input type="file" id="photoGeojsonInput" accept=".geojson" multiple />
+                </div>
+                <div class="io-row">
+                    <button id="photoClearBtn">読み込み済み写真をクリア</button>
+                </div>
+                <div class="io-row">
+                    <span id="photoCountDisplay" class="photo-count-display">読み込み済み: 0枚</span>
+                </div>
+                <div class="io-row">
+                    <span class="photo-help-note">基本ルート選択時に、開始・終了ポイントから半径100m以内の写真がサムネ表示されます。</span>
+                </div>
             </div>
         </div>
 
@@ -139,13 +150,6 @@
                     <span>スポット</span>
                 </label>
                 <span id="importSpotCount" class="modal-count">0個</span>
-            </div>
-            <div class="modal-row">
-                <label class="modal-check-label">
-                    <input type="checkbox" id="importPhoto" checked>
-                    <span>写真</span>
-                </label>
-                <span id="importPhotoCount" class="modal-count">0枚</span>
             </div>
             <div class="modal-actions">
                 <button id="importConfirmBtn" class="modal-btn modal-btn-primary">読み込む</button>

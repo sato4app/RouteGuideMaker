@@ -2,7 +2,7 @@
 
 import { MODES, MARKER_SHAPES } from './constants.js';
 import { initializeMap } from './mapCore.js';
-import { setupExcelInput, setupGeoJsonInput, setupExportButton, setupImportRouteGuideButton, refreshMarkers, refreshRoutes, markerStore, routeFeatureStore } from './fileIO.js';
+import { setupExcelInput, setupGeoJsonInput, setupExportButton, setupImportRouteGuideButton, setupPhotoInput, refreshMarkers, refreshRoutes, markerStore, routeFeatureStore } from './fileIO.js';
 import { setupRouteGuideEditor } from './routeGuideEditor.js';
 import { markerSettings, resetMarkerSettings } from './markerSettings.js';
 
@@ -14,6 +14,7 @@ setupExcelInput(dataLayer);
 setupGeoJsonInput(dataLayer);
 setupExportButton();
 setupImportRouteGuideButton();
+setupPhotoInput();
 
 // ルートガイドエディタの設定
 setupRouteGuideEditor(map, markerStore, routeFeatureStore);

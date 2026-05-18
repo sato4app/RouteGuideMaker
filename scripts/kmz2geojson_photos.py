@@ -145,10 +145,12 @@ def download_file_bytes(drive, file_id: str) -> bytes:
 
 
 def build_name_to_id_map(drive, folder_id: str) -> dict:
-    """フォルダ内のファイル名→fileId のマップを作る"""
+    """フォルダ内のファイル名→fileId のマップを作る
+    キーは lower-case にして、拡張子の大文字小文字差 (.jpg / .JPG) を吸収する。
+    """
     name_map = {}
     for f in list_children(drive, folder_id, mime_type_filter="file"):
-        name_map[f["name"]] = f["id"]
+        name_map[f["name"].lower()] = f["id"]
     return name_map
 
 
@@ -221,8 +223,9 @@ def build_features(placemarks: list, images_map: dict, photos_map: dict, kmz_inf
     features = []
     for pm in placemarks:
         img = pm.get("imageFile")
-        thumb_id = images_map.get(img) if img else None
-        photo_id = photos_map.get(img) if img else None
+        img_key = img.lower() if img else None  # ケース非依存照合用
+        thumb_id = images_map.get(img_key) if img_key else None
+        photo_id = photos_map.get(img_key) if img_key else None
 
         props = {
             "type": "photo",

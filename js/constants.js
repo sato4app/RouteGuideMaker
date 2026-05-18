@@ -77,7 +77,7 @@ export const MARKER_DEFAULTS = {
         kind: 'point',
         color: '#9acd32',
         shape: 'square',
-        size: 6
+        size: 4
     },
     photo: {
         label: '写真',
