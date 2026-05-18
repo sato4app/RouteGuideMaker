@@ -33,8 +33,6 @@ document.querySelectorAll('input[name="mode"]').forEach(radio => {
             this.value === MODES.FILEIO ? 'block' : 'none';
         document.getElementById('routeGuidePanel').style.display =
             this.value === MODES.ROUTE_GUIDE ? 'block' : 'none';
-        document.getElementById('photoPanel').style.display =
-            this.value === MODES.PHOTO ? 'block' : 'none';
         document.getElementById('markerPanel').style.display =
             this.value === MODES.MARKER ? 'block' : 'none';
     });

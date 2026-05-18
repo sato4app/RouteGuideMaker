@@ -372,13 +372,8 @@ export function setupGeoJsonInput(dataLayer) {
 }
 
 // ========================================
-// ルートガイド用写真の選択 - 写真GeoJSONの読み込み
+// 写真GeoJSONの読み込み (ファイル入出力パネル)
 // ========================================
-function updatePhotoCountDisplay() {
-    const el = document.getElementById('photoCountDisplay');
-    if (el) el.textContent = `読み込み済み: ${markerDataByType.photo.length}枚`;
-}
-
 export function setupPhotoInput() {
     document.getElementById('photoGeojsonInput').addEventListener('change', async function (e) {
         const files = Array.from(e.target.files);
@@ -414,7 +409,6 @@ export function setupPhotoInput() {
 
         if (count > 0) {
             showMessage(`${count}枚の写真を読み込みました`);
-            updatePhotoCountDisplay();
             document.dispatchEvent(new CustomEvent('photoStoreUpdated'));
         } else {
             showMessage('写真フィーチャー(type=photo)が見つかりませんでした', 'warning');
@@ -422,17 +416,6 @@ export function setupPhotoInput() {
 
         this.value = '';
     });
-
-    // 「読み込み済み写真をクリア」ボタン
-    const clearBtn = document.getElementById('photoClearBtn');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            markerDataByType.photo.length = 0;
-            updatePhotoCountDisplay();
-            document.dispatchEvent(new CustomEvent('photoStoreUpdated'));
-            showMessage('読み込み済み写真をクリアしました');
-        });
-    }
 }
 
 // ========================================

@@ -26,10 +26,6 @@
                 <span>ルートガイドの作成・編集</span>
             </label>
             <label>
-                <input type="radio" name="mode" value="photo">
-                <span>ルートガイド用写真の選択</span>
-            </label>
-            <label>
                 <input type="radio" name="mode" value="marker">
                 <span>マーカーの設定</span>
             </label>
@@ -45,6 +41,10 @@
                 <div class="io-row">
                     <label for="geojsonInput" class="file-input-label">ルート(GeoJSON)ファイルの読み込み</label>
                     <input type="file" id="geojsonInput" accept=".geojson" multiple />
+                </div>
+                <div class="io-row">
+                    <label for="photoGeojsonInput" class="file-input-label">写真(GeoJSON)ファイルの読み込み</label>
+                    <input type="file" id="photoGeojsonInput" accept=".geojson" multiple />
                 </div>
                 <div class="io-row">
                     <button id="exportBtn">ルートガイドのファイル出力</button>
@@ -95,25 +95,6 @@
             <div class="route-guide-name-section">
                 <label class="route-guide-name-label" for="routeGuidePointsList">ルートガイド名</label>
                 <input type="text" id="routeGuidePointsList" class="route-guide-name-input" readonly>
-            </div>
-        </div>
-
-        <!-- ルートガイド用写真の選択パネル -->
-        <div id="photoPanel" style="display: none;">
-            <div class="io-controls">
-                <div class="io-row">
-                    <label for="photoGeojsonInput" class="file-input-label">写真(GeoJSON)ファイルの読み込み</label>
-                    <input type="file" id="photoGeojsonInput" accept=".geojson" multiple />
-                </div>
-                <div class="io-row">
-                    <button id="photoClearBtn">読み込み済み写真をクリア</button>
-                </div>
-                <div class="io-row">
-                    <span id="photoCountDisplay" class="photo-count-display">読み込み済み: 0枚</span>
-                </div>
-                <div class="io-row">
-                    <span class="photo-help-note">基本ルート選択時に、開始・終了ポイントから半径100m以内の写真がサムネ表示されます。</span>
-                </div>
             </div>
         </div>
 

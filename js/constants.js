@@ -102,6 +102,5 @@ export const MARKER_SHAPES = [
 export const MODES = {
     FILEIO: 'fileio',
     ROUTE_GUIDE: 'routeGuide',
-    PHOTO: 'photo',
     MARKER: 'marker'
 };
