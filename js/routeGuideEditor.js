@@ -256,12 +256,14 @@ function onPreStartChange() {
     preStartPointId = document.getElementById('preStartPoint').value;
     renderPointsList();
     renderHighlights();
+    renderFilteredPhotos();
 }
 
 function onPostEndChange() {
     postEndPointId = document.getElementById('postEndPoint').value;
     renderPointsList();
     renderHighlights();
+    renderFilteredPhotos();
 }
 
 function resetDropdowns() {
@@ -382,26 +384,45 @@ function buildPhotoPopupHtml(p) {
     return `<div>${parts.join('')}</div>`;
 }
 
+// フィルタ基準となる座標群を集める:
+//   ・基本ルートの全座標 (開始・中間点・終了)
+//   ・ルート前後ハイライト範囲 (1/3部分) の全座標
+function collectPhotoAnchorCoords() {
+    const anchors = [];
+    if (selectedRouteIndex < 0 || selectedRouteIndex >= _routeFeatureStore.length) return anchors;
+    const basic = _routeFeatureStore[selectedRouteIndex];
+
+    if (basic.coords && basic.coords.length > 0) {
+        basic.coords.forEach(c => anchors.push(L.latLng(c[0], c[1])));
+    }
+
+    if (preStartPointId && basic.startId) {
+        const r = findRouteBetween(preStartPointId, basic.startId);
+        const partial = getPartialFromAnchor(r, basic.startId);
+        if (partial) partial.forEach(c => anchors.push(L.latLng(c[0], c[1])));
+    }
+    if (postEndPointId && basic.endId) {
+        const r = findRouteBetween(basic.endId, postEndPointId);
+        const partial = getPartialFromAnchor(r, basic.endId);
+        if (partial) partial.forEach(c => anchors.push(L.latLng(c[0], c[1])));
+    }
+
+    return anchors;
+}
+
 function renderFilteredPhotos() {
     if (!photoLayer) return;
     photoLayer.clearLayers();
 
-    if (selectedRouteIndex < 0 || selectedRouteIndex >= _routeFeatureStore.length) return;
-    const basic = _routeFeatureStore[selectedRouteIndex];
-    const startMarker = _markerStore && _markerStore.get(basic.startId);
-    const endMarker   = _markerStore && _markerStore.get(basic.endId);
-    if (!startMarker && !endMarker) return;
+    const anchors = collectPhotoAnchorCoords();
+    if (anchors.length === 0) return;
 
-    const startLL = startMarker ? startMarker.getLatLng() : null;
-    const endLL   = endMarker   ? endMarker.getLatLng()   : null;
-    const radius  = PHOTO_FILTER_RADIUS_METERS;
-
+    const radius = PHOTO_FILTER_RADIUS_METERS;
     const photos = getPhotoData();
     photos.forEach(p => {
         const ll = L.latLng(p.lat, p.lng);
-        const nearStart = startLL && ll.distanceTo(startLL) <= radius;
-        const nearEnd   = endLL   && ll.distanceTo(endLL)   <= radius;
-        if (!nearStart && !nearEnd) return;
+        const nearAny = anchors.some(a => ll.distanceTo(a) <= radius);
+        if (!nearAny) return;
         const marker = createMarker('photo', ll, { thumbnailUrl: p.thumbnailUrl });
         marker.bindPopup(buildPhotoPopupHtml(p), { maxWidth: 260 });
         marker.addTo(photoLayer);
