@@ -23,16 +23,23 @@ const spotStore = [];
 const markerDataByType = {
     pointGps: [], // { id, name, lat, lng }
     point:    [], // { id, lat, lng }
-    spot:     []  // { name, lat, lng }
+    spot:     [], // { name, lat, lng }
+    photo:    []  // { lat, lng, thumbnailUrl, fullUrl, fileName, sourceKmz }
 };
 
 // 現在地図に表示中のマーカーインスタンス（種別ごと）
 // refreshMarkers時にこれらを地図から除去してから再生成する
+// photo はルート選択時のみ routeGuideEditor 側で描画するためここでは管理しない
 const markerInstancesByType = {
     pointGps: [],
     point:    [],
     spot:     []
 };
+
+// 写真データ参照用エクスポート (routeGuideEditorから利用)
+export function getPhotoData() {
+    return markerDataByType.photo;
+}
 
 // dataLayer の参照（setup関数で設定）
 let _dataLayer = null;
@@ -78,7 +85,8 @@ function classifyFeature(f) {
 
     if (geomType === 'LineString') return 'route';
     if (geomType === 'Point') {
-        if (type === 'spot') return 'spot';
+        if (type === 'spot')  return 'spot';
+        if (type === 'photo') return 'photo';
         return 'point';
     }
     return null;
@@ -157,7 +165,7 @@ export function refreshMarkers() {
 // ========================================
 function showImportModal(features) {
     return new Promise((resolve) => {
-        const counts = { point: 0, route: 0, spot: 0 };
+        const counts = { point: 0, route: 0, spot: 0, photo: 0 };
         features.forEach(f => {
             const cls = classifyFeature(f);
             if (cls) counts[cls]++;
@@ -166,10 +174,12 @@ function showImportModal(features) {
         document.getElementById('importPointCount').textContent = `${counts.point}点`;
         document.getElementById('importRouteCount').textContent = `${counts.route}本`;
         document.getElementById('importSpotCount').textContent = `${counts.spot}個`;
+        document.getElementById('importPhotoCount').textContent = `${counts.photo}枚`;
 
         document.getElementById('importPoint').checked = false;
         document.getElementById('importRoute').checked = counts.route > 0;
         document.getElementById('importSpot').checked = counts.spot > 0;
+        document.getElementById('importPhoto').checked = counts.photo > 0;
 
         const modal = document.getElementById('geojsonImportModal');
         modal.style.display = 'flex';
@@ -187,7 +197,8 @@ function showImportModal(features) {
             const selection = {
                 point: document.getElementById('importPoint').checked,
                 route: document.getElementById('importRoute').checked,
-                spot: document.getElementById('importSpot').checked
+                spot: document.getElementById('importSpot').checked,
+                photo: document.getElementById('importPhoto').checked
             };
             cleanup();
             resolve(selection);
@@ -323,14 +334,28 @@ export function setupGeoJsonInput(dataLayer) {
             }
         });
 
-        // ─── 第3パス: ポイント・スポットを選択された場合は地図に表示 ───
+        // ─── 第3パス: ポイント・スポット・写真を選択された場合に登録 ───
+        // 写真はストアに登録するのみで、地図への描画はrouteGuideEditor側でルート選択時に行う
         allFeatures.forEach(f => {
             const cls = classifyFeature(f);
-            if (cls !== 'point' && cls !== 'spot') return;
+            if (cls !== 'point' && cls !== 'spot' && cls !== 'photo') return;
             if (!selection[cls]) return;
 
             const props = f.properties || {};
             const name = props.name || '';
+
+            if (cls === 'photo') {
+                const [lng, lat] = f.geometry.coordinates;
+                markerDataByType.photo.push({
+                    lat, lng,
+                    thumbnailUrl: props.thumbnailUrl || '',
+                    fullUrl: props.fullUrl || '',
+                    fileName: props.fileName || '',
+                    sourceKmz: props.sourceKmz || ''
+                });
+                count++;
+                return;
+            }
 
             if (cls === 'point') {
                 const [lng, lat] = f.geometry.coordinates;
@@ -357,6 +382,7 @@ export function setupGeoJsonInput(dataLayer) {
         if (count > 0) showMessage(`${count}件のデータを読み込みました`);
 
         document.dispatchEvent(new CustomEvent('routeStoreUpdated'));
+        document.dispatchEvent(new CustomEvent('photoStoreUpdated'));
 
         this.value = '';
     });

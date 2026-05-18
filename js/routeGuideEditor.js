@@ -1,11 +1,14 @@
 // ルートガイドの作成・編集
 
+import { PHOTO_FILTER_RADIUS_METERS } from './constants.js';
 import { createMarker, getLineStyle } from './markerSettings.js';
+import { getPhotoData } from './fileIO.js';
 
 let _map = null;
 let _markerStore = null;
 let _routeFeatureStore = null;
 let highlightLayer = null;
+let photoLayer = null;
 
 // 選択状態
 let selectedRouteIndex = -1;
@@ -25,6 +28,7 @@ export function setupRouteGuideEditor(map, markerStore, routeFeatureStore) {
     _markerStore = markerStore;
     _routeFeatureStore = routeFeatureStore;
     highlightLayer = L.layerGroup().addTo(map);
+    photoLayer = L.layerGroup().addTo(map);
 
     document.getElementById('routeStart').addEventListener('change', onStartFilterChange);
     document.getElementById('routeEnd').addEventListener('change', onEndFilterChange);
@@ -35,8 +39,13 @@ export function setupRouteGuideEditor(map, markerStore, routeFeatureStore) {
 
     // ルート読み込み時にドロップダウンを更新
     document.addEventListener('routeStoreUpdated', updateAllDropdowns);
-    // マーカー設定変更時にハイライトを再描画
-    document.addEventListener('markerSettingsChanged', renderHighlights);
+    // 写真読み込み時に写真フィルタを更新 (ルートが既に選択されていれば再描画)
+    document.addEventListener('photoStoreUpdated', renderFilteredPhotos);
+    // マーカー設定変更時にハイライト/写真を再描画
+    document.addEventListener('markerSettingsChanged', () => {
+        renderHighlights();
+        renderFilteredPhotos();
+    });
 
     updateAllDropdowns();
     renderPointsList();
@@ -240,6 +249,7 @@ function onRoutePathChange() {
     preStartPointId = '';
     postEndPointId = '';
     updateAdjacentDropdowns();
+    renderFilteredPhotos();
 }
 
 function onPreStartChange() {
@@ -263,6 +273,7 @@ function resetDropdowns() {
     postEndPointId = '';
     updateEndDropdown();
     updatePathDropdown();
+    renderFilteredPhotos();
 }
 
 // ========================================
@@ -341,5 +352,58 @@ function renderHighlights() {
         if (!m) return;
         const overlay = createMarker('selectedPoint', m.getLatLng());
         overlay.addTo(highlightLayer);
+    });
+}
+
+// ========================================
+// 写真フィルタ表示
+//   基本ルートの開始/終了ポイントから半径 PHOTO_FILTER_RADIUS_METERS 以内の
+//   写真のみマップに表示する。ルート未選択時は全て非表示。
+// ========================================
+function buildPhotoPopupHtml(p) {
+    const parts = [];
+    if (p.thumbnailUrl) {
+        parts.push(
+            `<img src="${p.thumbnailUrl}" referrerpolicy="no-referrer" ` +
+            `style="max-width:240px;max-height:240px;display:block;margin-bottom:6px;">`
+        );
+    }
+    if (p.fileName) {
+        parts.push(`<div style="font-size:12px;">${p.fileName}</div>`);
+    }
+    if (p.sourceKmz) {
+        parts.push(`<div style="font-size:11px;color:#666;">${p.sourceKmz}</div>`);
+    }
+    if (p.fullUrl) {
+        parts.push(
+            `<div style="margin-top:6px;"><a href="${p.fullUrl}" target="_blank" rel="noopener">元画像を開く</a></div>`
+        );
+    }
+    return `<div>${parts.join('')}</div>`;
+}
+
+function renderFilteredPhotos() {
+    if (!photoLayer) return;
+    photoLayer.clearLayers();
+
+    if (selectedRouteIndex < 0 || selectedRouteIndex >= _routeFeatureStore.length) return;
+    const basic = _routeFeatureStore[selectedRouteIndex];
+    const startMarker = _markerStore && _markerStore.get(basic.startId);
+    const endMarker   = _markerStore && _markerStore.get(basic.endId);
+    if (!startMarker && !endMarker) return;
+
+    const startLL = startMarker ? startMarker.getLatLng() : null;
+    const endLL   = endMarker   ? endMarker.getLatLng()   : null;
+    const radius  = PHOTO_FILTER_RADIUS_METERS;
+
+    const photos = getPhotoData();
+    photos.forEach(p => {
+        const ll = L.latLng(p.lat, p.lng);
+        const nearStart = startLL && ll.distanceTo(startLL) <= radius;
+        const nearEnd   = endLL   && ll.distanceTo(endLL)   <= radius;
+        if (!nearStart && !nearEnd) return;
+        const marker = createMarker('photo', ll, { thumbnailUrl: p.thumbnailUrl });
+        marker.bindPopup(buildPhotoPopupHtml(p), { maxWidth: 260 });
+        marker.addTo(photoLayer);
     });
 }

@@ -22,10 +22,13 @@ export const DEFAULTS = {
     }
 };
 
+// 写真フィルタ用: 基本ルートの開始/終了ポイントからこの半径(メートル)以内の写真を表示
+export const PHOTO_FILTER_RADIUS_METERS = 100;
+
 // マーカー／ルート種別ごとのデフォルト設定
-// kind: 'point' (マーカー) | 'line' (ルート線)
+// kind: 'point' (マーカー) | 'line' (ルート線) | 'photo' (写真サムネ)
 // shape: kind=='point' で有効。'circle' | 'square' | 'triangle' | 'diamond' | 'star' | 'line'
-// size: kind=='point' は半径相当ピクセル、kind=='line' は線の太さ
+// size: kind=='point' は半径相当ピクセル、kind=='line' は線の太さ、kind=='photo' はサムネ半サイズ
 export const MARKER_DEFAULTS = {
     pointGps: {
         label: 'ポイントGPS',
@@ -75,6 +78,13 @@ export const MARKER_DEFAULTS = {
         color: '#9acd32',
         shape: 'square',
         size: 6
+    },
+    photo: {
+        label: '写真',
+        kind: 'photo',
+        color: '#ffffff',  // サムネ枠の色
+        shape: 'circle',   // photoでは未使用
+        size: 16           // サムネの半サイズ(実表示は size*2 px)
     }
 };
 

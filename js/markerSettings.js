@@ -28,8 +28,28 @@ export function getLineStyle(type) {
 
 // 指定された種別の現在の設定でマーカーを生成
 // shape='circle' は L.circleMarker、その他は L.marker + divIcon
-export function createMarker(type, latlng) {
+// kind='photo' の場合は options.thumbnailUrl のサムネイル画像をdivIconで描画
+export function createMarker(type, latlng, options = {}) {
     const cfg = markerSettings[type];
+    if (cfg.kind === 'photo') {
+        const px = cfg.size * 2;
+        const thumb = options.thumbnailUrl || '';
+        const html = (
+            `<div style="width:${px}px;height:${px}px;border:2px solid ${cfg.color};` +
+            `border-radius:4px;overflow:hidden;box-shadow:0 0 4px rgba(0,0,0,0.5);background:#fff;">` +
+            (thumb
+                ? `<img src="${thumb}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                : '') +
+            `</div>`
+        );
+        const icon = L.divIcon({
+            className: '',
+            html,
+            iconSize: [px, px],
+            iconAnchor: [cfg.size, cfg.size]
+        });
+        return L.marker(latlng, { icon });
+    }
     if (cfg.shape === 'circle') {
         return L.circleMarker(latlng, {
             radius: cfg.size,
