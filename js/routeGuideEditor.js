@@ -225,7 +225,9 @@ function renderPointsList() {
         startId = basic.startId || '';
         endId = basic.endId || '';
     }
-    input.value = [preStartPointId, startId, endId, postEndPointId].join(' → ');
+    const pre  = preStartPointId ? `(${preStartPointId})` : '';
+    const post = postEndPointId  ? `(${postEndPointId})`  : '';
+    input.value = [pre, startId, endId, post].join(' ⇒ ');
 }
 
 // ========================================
