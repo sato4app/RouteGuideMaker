@@ -251,6 +251,7 @@ button:hover {
 .photo-list-body {
     max-height: 360px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .photo-list-group {
@@ -277,12 +278,13 @@ button:hover {
 
 .photo-list-thumbs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px;
 }
 
 .photo-list-thumb {
     width: 100%;
+    min-width: 0;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border: 1px solid #ccc;

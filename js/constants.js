@@ -87,7 +87,7 @@ export const MARKER_DEFAULTS = {
         kind: 'photo',
         color: '#ffffff',  // サムネ枠の色
         shape: 'circle',   // photoでは未使用
-        size: 16           // サムネの半サイズ(実表示は size*2 px)
+        size: 10           // サムネの半サイズ(実表示は size*2 px)
     }
 };
 
