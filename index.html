@@ -96,6 +96,13 @@
                 <label class="route-guide-name-label" for="routeGuidePointsList">ルートガイド名</label>
                 <input type="text" id="routeGuidePointsList" class="route-guide-name-input" readonly>
             </div>
+
+            <div class="route-guide-photo-toggle">
+                <label>
+                    <input type="checkbox" id="showRoutePhotos">
+                    <span>ルートの周辺の写真を表示</span>
+                </label>
+            </div>
         </div>
 
         <!-- マーカーの設定パネル -->
@@ -105,6 +112,12 @@
                 <button id="markerResetBtn">デフォルト値に戻す</button>
             </div>
         </div>
+    </div>
+
+    <!-- 写真一覧パネル -->
+    <div id="photoListPanel" class="photo-list-panel" style="display:none;">
+        <div class="photo-list-title">ルート周辺の写真</div>
+        <div id="photoListBody" class="photo-list-body"></div>
     </div>
 
     <!-- GeoJSON読み込み種別選択モーダル -->

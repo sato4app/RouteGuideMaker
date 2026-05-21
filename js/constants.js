@@ -25,6 +25,9 @@ export const DEFAULTS = {
 // 写真フィルタ用: 基本ルートの開始/終了ポイントからこの半径(メートル)以内の写真を表示
 export const PHOTO_FILTER_RADIUS_METERS = 100;
 
+// 写真グルーピング用: この距離(メートル)以内の写真は同一マーカー(同一番号)にまとめる
+export const PHOTO_GROUP_RADIUS_METERS = 30;
+
 // マーカー／ルート種別ごとのデフォルト設定
 // kind: 'point' (マーカー) | 'line' (ルート線) | 'photo' (写真サムネ)
 // shape: kind=='point' で有効。'circle' | 'square' | 'triangle' | 'diamond' | 'star' | 'line'

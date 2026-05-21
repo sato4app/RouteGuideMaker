@@ -1,6 +1,6 @@
 // ルートガイドの作成・編集
 
-import { PHOTO_FILTER_RADIUS_METERS } from './constants.js';
+import { PHOTO_FILTER_RADIUS_METERS, PHOTO_GROUP_RADIUS_METERS } from './constants.js';
 import { createMarker, getLineStyle } from './markerSettings.js';
 import { getPhotoData } from './fileIO.js';
 
@@ -17,6 +17,17 @@ let postEndPointId = '';
 
 // fileIO 互換用スタブ（旧データモデルは未使用）
 export function isEditingMode() { return false; }
+
+// ルートガイドモードの表示/非表示切り替え時に呼び出す
+//   非表示になったら写真表示・写真一覧パネルもクリアする
+export function setRouteGuideModeActive(active) {
+    if (active) {
+        renderFilteredPhotos();
+    } else {
+        if (photoLayer) photoLayer.clearLayers();
+        renderPhotoListPanel([]);
+    }
+}
 export function getRouteGuides() { return []; }
 export function loadRouteGuides() { /* no-op: 新データモデル未定 */ }
 
@@ -36,6 +47,7 @@ export function setupRouteGuideEditor(map, markerStore, routeFeatureStore) {
     document.getElementById('preStartPoint').addEventListener('change', onPreStartChange);
     document.getElementById('postEndPoint').addEventListener('change', onPostEndChange);
     document.getElementById('resetDropdownBtn').addEventListener('click', resetDropdowns);
+    document.getElementById('showRoutePhotos').addEventListener('change', onShowPhotosChange);
 
     // ルート読み込み時にドロップダウンを更新
     document.addEventListener('routeStoreUpdated', updateAllDropdowns);
@@ -45,6 +57,12 @@ export function setupRouteGuideEditor(map, markerStore, routeFeatureStore) {
     document.addEventListener('markerSettingsChanged', () => {
         renderHighlights();
         renderFilteredPhotos();
+    });
+
+    // ウィンドウリサイズ時に写真一覧パネルの位置を追従させる
+    window.addEventListener('resize', () => {
+        const panel = document.getElementById('photoListPanel');
+        if (panel && panel.style.display !== 'none') positionPhotoListPanel();
     });
 
     updateAllDropdowns();
@@ -268,6 +286,10 @@ function onPostEndChange() {
     renderFilteredPhotos();
 }
 
+function onShowPhotosChange() {
+    renderFilteredPhotos();
+}
+
 function resetDropdowns() {
     document.getElementById('routeStart').value = '';
     document.getElementById('routeEnd').value = '';
@@ -412,21 +434,149 @@ function collectPhotoAnchorCoords() {
     return anchors;
 }
 
+// 近接する写真を1グループにまとめる
+//   貪欲法: 未割当の写真を起点にし、起点から PHOTO_GROUP_RADIUS_METERS 以内の
+//   未割当写真を同一グループに集約する。グループ代表座標は起点写真の座標。
+function groupPhotosByProximity(photos) {
+    const groups = [];
+    const assigned = new Array(photos.length).fill(false);
+    const radius = PHOTO_GROUP_RADIUS_METERS;
+
+    for (let i = 0; i < photos.length; i++) {
+        if (assigned[i]) continue;
+        const base = L.latLng(photos[i].lat, photos[i].lng);
+        const members = [photos[i]];
+        assigned[i] = true;
+        for (let j = i + 1; j < photos.length; j++) {
+            if (assigned[j]) continue;
+            const ll = L.latLng(photos[j].lat, photos[j].lng);
+            if (base.distanceTo(ll) <= radius) {
+                members.push(photos[j]);
+                assigned[j] = true;
+            }
+        }
+        groups.push({ latlng: base, photos: members });
+    }
+    return groups;
+}
+
+// 番号付きの写真グループマーカーを生成
+function createPhotoGroupMarker(latlng, number) {
+    const html = (
+        `<div style="width:26px;height:26px;line-height:22px;text-align:center;` +
+        `background:#ff8c00;color:#fff;font-size:13px;font-weight:bold;` +
+        `border:2px solid #fff;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,0.5);">` +
+        `${number}</div>`
+    );
+    const icon = L.divIcon({
+        className: '',
+        html,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+    });
+    return L.marker(latlng, { icon });
+}
+
 function renderFilteredPhotos() {
     if (!photoLayer) return;
     photoLayer.clearLayers();
 
-    const anchors = collectPhotoAnchorCoords();
-    if (anchors.length === 0) return;
+    const enabled = document.getElementById('showRoutePhotos').checked;
+    if (!enabled) {
+        renderPhotoListPanel([]);
+        return;
+    }
 
+    const anchors = collectPhotoAnchorCoords();
+    if (anchors.length === 0) {
+        renderPhotoListPanel([]);
+        return;
+    }
+
+    // ルート周辺の写真を抽出
     const radius = PHOTO_FILTER_RADIUS_METERS;
-    const photos = getPhotoData();
-    photos.forEach(p => {
+    const nearPhotos = getPhotoData().filter(p => {
         const ll = L.latLng(p.lat, p.lng);
-        const nearAny = anchors.some(a => ll.distanceTo(a) <= radius);
-        if (!nearAny) return;
-        const marker = createMarker('photo', ll, { thumbnailUrl: p.thumbnailUrl });
-        marker.bindPopup(buildPhotoPopupHtml(p), { maxWidth: 260 });
+        return anchors.some(a => ll.distanceTo(a) <= radius);
+    });
+
+    // 近接する写真をグループ化し、番号付きマーカーとして表示
+    const groups = groupPhotosByProximity(nearPhotos);
+    groups.forEach((g, idx) => {
+        const number = idx + 1;
+        const marker = createPhotoGroupMarker(g.latlng, number);
+        marker.bindPopup(buildGroupPopupHtml(g, number), { maxWidth: 280 });
         marker.addTo(photoLayer);
     });
+
+    renderPhotoListPanel(groups);
+}
+
+// グループマーカーのポップアップ (グループ内の全写真サムネを表示)
+function buildGroupPopupHtml(group, number) {
+    const thumbs = group.photos.map(p =>
+        p.thumbnailUrl
+            ? `<img src="${p.thumbnailUrl}" referrerpolicy="no-referrer" ` +
+              `style="width:72px;height:72px;object-fit:cover;border:1px solid #ccc;border-radius:4px;">`
+            : ''
+    ).join('');
+    return (
+        `<div style="font-weight:bold;margin-bottom:6px;">写真グループ ${number} ` +
+        `(${group.photos.length}枚)</div>` +
+        `<div style="display:flex;flex-wrap:wrap;gap:4px;">${thumbs}</div>`
+    );
+}
+
+// ========================================
+// 写真一覧パネル描画
+//   グループごとに番号 + サムネイル(横3枚グリッド)を表示
+// ========================================
+function renderPhotoListPanel(groups) {
+    const panel = document.getElementById('photoListPanel');
+    const body = document.getElementById('photoListBody');
+    if (!panel || !body) return;
+
+    if (!groups || groups.length === 0) {
+        panel.style.display = 'none';
+        body.innerHTML = '';
+        return;
+    }
+
+    body.innerHTML = '';
+    groups.forEach((g, idx) => {
+        const number = idx + 1;
+        const groupEl = document.createElement('div');
+        groupEl.className = 'photo-list-group';
+
+        const numEl = document.createElement('div');
+        numEl.className = 'photo-list-group-num';
+        numEl.textContent = String(number);
+        groupEl.appendChild(numEl);
+
+        const thumbsEl = document.createElement('div');
+        thumbsEl.className = 'photo-list-thumbs';
+        g.photos.forEach(p => {
+            if (!p.thumbnailUrl) return;
+            const img = document.createElement('img');
+            img.className = 'photo-list-thumb';
+            img.src = p.thumbnailUrl;
+            img.referrerPolicy = 'no-referrer';
+            img.title = p.fileName || '';
+            thumbsEl.appendChild(img);
+        });
+        groupEl.appendChild(thumbsEl);
+        body.appendChild(groupEl);
+    });
+
+    panel.style.display = 'block';
+    positionPhotoListPanel();
+}
+
+// 写真一覧パネルをコントロールパネルの直下に配置
+function positionPhotoListPanel() {
+    const control = document.querySelector('.control-panel');
+    const panel = document.getElementById('photoListPanel');
+    if (!control || !panel) return;
+    const rect = control.getBoundingClientRect();
+    panel.style.top = `${rect.bottom + 10}px`;
 }

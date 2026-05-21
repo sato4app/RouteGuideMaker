@@ -3,7 +3,7 @@
 import { MODES, MARKER_SHAPES } from './constants.js';
 import { initializeMap } from './mapCore.js';
 import { setupExcelInput, setupGeoJsonInput, setupExportButton, setupImportRouteGuideButton, setupPhotoInput, refreshMarkers, refreshRoutes, markerStore, routeFeatureStore } from './fileIO.js';
-import { setupRouteGuideEditor } from './routeGuideEditor.js';
+import { setupRouteGuideEditor, setRouteGuideModeActive } from './routeGuideEditor.js';
 import { markerSettings, resetMarkerSettings } from './markerSettings.js';
 
 // 地図とレイヤーの初期化
@@ -35,6 +35,9 @@ document.querySelectorAll('input[name="mode"]').forEach(radio => {
             this.value === MODES.ROUTE_GUIDE ? 'block' : 'none';
         document.getElementById('markerPanel').style.display =
             this.value === MODES.MARKER ? 'block' : 'none';
+
+        // ルートガイドモード以外では写真表示・写真一覧パネルを隠す
+        setRouteGuideModeActive(this.value === MODES.ROUTE_GUIDE);
     });
 });
 
