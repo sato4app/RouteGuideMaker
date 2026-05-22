@@ -377,6 +377,11 @@ function renderHighlights() {
         const m = _markerStore && _markerStore.get(id);
         if (!m) return;
         const overlay = createMarker('selectedPoint', m.getLatLng());
+        // 元のポイント（ポイントGPS）のポップアップ情報を引き継ぐ
+        const srcPopup = m.getPopup && m.getPopup();
+        if (srcPopup) {
+            overlay.bindPopup(srcPopup.getContent(), srcPopup.options);
+        }
         overlay.addTo(highlightLayer);
     });
 }
