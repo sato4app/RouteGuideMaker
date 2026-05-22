@@ -505,26 +505,10 @@ function renderFilteredPhotos() {
     groups.forEach((g, idx) => {
         const number = idx + 1;
         const marker = createPhotoGroupMarker(g.latlng, number);
-        marker.bindPopup(buildGroupPopupHtml(g, number), { maxWidth: 280 });
         marker.addTo(photoLayer);
     });
 
     renderPhotoListPanel(groups);
-}
-
-// グループマーカーのポップアップ (グループ内の全写真サムネを表示)
-function buildGroupPopupHtml(group, number) {
-    const thumbs = group.photos.map(p =>
-        p.thumbnailUrl
-            ? `<img src="${p.thumbnailUrl}" referrerpolicy="no-referrer" ` +
-              `style="width:72px;height:72px;object-fit:cover;border:1px solid #ccc;border-radius:4px;">`
-            : ''
-    ).join('');
-    return (
-        `<div style="font-weight:bold;margin-bottom:6px;">写真グループ ${number} ` +
-        `(${group.photos.length}枚)</div>` +
-        `<div style="display:flex;flex-wrap:wrap;gap:4px;">${thumbs}</div>`
-    );
 }
 
 // ========================================

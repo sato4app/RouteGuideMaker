@@ -52,6 +52,7 @@ export function createMarker(type, latlng, options = {}) {
     }
     if (cfg.shape === 'circle') {
         return L.circleMarker(latlng, {
+            pane: 'markerPane',
             radius: cfg.size,
             fillColor: cfg.color,
             color: cfg.color,
